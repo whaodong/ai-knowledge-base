@@ -16,6 +16,17 @@ spring:
   
   # Milvus向量数据库配置
   ai:
+    # Spring AI 通义千问配置（OpenAI兼容模式）
+    openai:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: ${DASHSCOPE_API_KEY:your-dashscope-api-key-here}
+      chat:
+        options:
+          model: qwen-plus
+          temperature: 0.7
+      embedding:
+        options:
+          model: text-embedding-v3
     milvus:
       host: localhost
       port: 19530
@@ -46,11 +57,14 @@ spring:
     stack:
       enabled: true
   
-  # LangChain4j配置
+  # LangChain4j配置 - 通义千问（OpenAI兼容模式）
   langchain4j:
     open-ai:
-      api-key: ${OPENAI_API_KEY:your-api-key-here}
-      model-name: gpt-4
+      # 阿里云通义千问 OpenAI 兼容模式 endpoint
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      # API Key（请设置环境变量 DASHSCOPE_API_KEY 或直接替换）
+      api-key: ${DASHSCOPE_API_KEY:your-dashscope-api-key-here}
+      model-name: qwen-plus
       temperature: 0.7
       max-tokens: 2000
 

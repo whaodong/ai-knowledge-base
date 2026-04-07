@@ -3,6 +3,7 @@ package com.example.milvus.index;
 import io.milvus.client.MilvusClient;
 import io.milvus.grpc.GetCollectionStatisticsResponse;
 import io.milvus.param.R;
+import io.milvus.param.RpcStatus;
 import io.milvus.param.collection.GetCollectionStatisticsParam;
 import io.milvus.param.collection.HasCollectionParam;
 import io.milvus.param.index.CreateIndexParam;
@@ -343,7 +344,7 @@ public class IndexStrategySelector {
                     .withMetricType(io.milvus.param.MetricType.COSINE)
                     .withExtraParam(result.getIndexParams().toString());
 
-            R<Boolean> response = milvusClient.createIndex(builder.build());
+            R<RpcStatus> response = milvusClient.createIndex(builder.build());
             
             if (response.getStatus() == R.Status.Success.getCode()) {
                 log.info("成功创建索引: {}, 类型: {}", indexName, result.getIndexType());

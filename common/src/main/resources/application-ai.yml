@@ -1,0 +1,19 @@
+# 通义千问 AI 配置
+# 使用阿里云通义千问 OpenAI 兼容模式
+spring:
+  ai:
+    openai:
+      # 阿里云通义千问 OpenAI 兼容模式 endpoint
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      # API Key（请替换为你的阿里云 API Key）
+      api-key: ${DASHSCOPE_API_KEY:your-dashscope-api-key-here}
+      chat:
+        # 默认使用 qwen-plus 模型，可选：qwen-turbo, qwen-plus, qwen-max
+        options:
+          model: qwen-plus
+          temperature: 0.7
+          max-tokens: 4096
+      embedding:
+        # 使用通义千问 embedding 模型
+        options:
+          model: text-embedding-v3
