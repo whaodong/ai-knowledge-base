@@ -66,4 +66,9 @@ public class RagRequest {
      */
     @Builder.Default
     private String chunkingStrategy = "semantic";
+    
+    /**
+     * 额外的元数据（如用户ID、会话ID等）
+     */
+    private java.util.Map<String, Object> metadata;
 }

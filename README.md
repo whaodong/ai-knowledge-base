@@ -179,6 +179,53 @@ java -jar api-gateway/target/api-gateway-1.0.0-SNAPSHOT.jar
 - **熔断限流**: Resilience4j
 - **分布式追踪**: Micrometer Tracing + Zipkin
 
+### 分布式追踪系统
+
+本系统集成了完整的分布式追踪能力，支持Zipkin和Jaeger。
+
+#### 主要功能
+
+1. **自动追踪**
+   - Service层方法自动追踪
+   - Repository层数据库访问追踪
+   - 支持自定义Span
+
+2. **AI服务链路追踪**
+   - 文档处理链路：上传→解析→分割→向量化→入库
+   - RAG查询链路：问题→检索→重排序→生成→返回
+   - Token使用追踪
+   - 外部API调用追踪
+
+3. **Trace分析**
+   - 慢请求分析（P99延迟）
+   - 错误链路追踪
+   - 服务依赖图生成
+   - 性能瓶颈定位
+
+#### 快速开始
+
+```bash
+# 启动Zipkin
+cd monitoring/tracing
+docker-compose up -d zipkin
+
+# 访问Zipkin UI
+http://localhost:9411
+
+# 调用API生成追踪数据
+curl -X POST http://localhost:8080/api/v1/rag/retrieve \
+  -H "Content-Type: application/json" \
+  -d '{"query": "测试问题", "topK": 5}'
+
+# 查看追踪统计
+curl http://localhost:8080/api/v1/tracing/stats
+curl http://localhost:8080/api/v1/tracing/bottlenecks
+```
+
+详细文档：
+- [分布式追踪完整指南](docs/tracing-guide.md)
+- [快速开始指南](docs/tracing-quickstart.md)
+
 ## 配置说明
 
 ### Milvus 配置

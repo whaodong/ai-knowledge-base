@@ -67,6 +67,11 @@ public class RagResponse {
     private EvaluationMetrics evaluationMetrics;
     
     /**
+     * 是否来自缓存
+     */
+    private boolean fromCache;
+    
+    /**
      * 检索器统计信息
      */
     @Data

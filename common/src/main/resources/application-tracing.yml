@@ -1,0 +1,87 @@
+# 分布式追踪配置
+tracing:
+  # 是否启用追踪
+  enabled: true
+  
+  # 采样配置
+  sampling:
+    # 采样概率 (0.0-1.0)，生产环境建议0.1
+    probability: 0.1
+    # 是否对错误请求强制采样
+    sample-errors: true
+    # 慢请求阈值（毫秒），超过此阈值的请求强制采样
+    slow-request-threshold: 1000
+  
+  # Zipkin配置
+  zipkin:
+    # Zipkin服务地址
+    endpoint: http://localhost:9411/api/v2/spans
+    # 连接超时时间（毫秒）
+    connect-timeout: 5000
+    # 读取超时时间（毫秒）
+    read-timeout: 10000
+  
+  # Jaeger配置（备选）
+  jaeger:
+    # Jaeger服务地址
+    endpoint: http://localhost:14268/api/traces
+    # 是否使用UDP传输
+    use-udp: false
+    # UDP主机
+    udp-host: localhost
+    # UDP端口
+    udp-port: 6831
+  
+  # 自定义标签
+  custom-tags:
+    env: ${spring.profiles.active:default}
+    version: ${project.version:1.0.0}
+    service: ${spring.application.name:unknown}
+  
+  # 需要追踪的包路径
+  base-packages:
+    - com.example.document.service
+    - com.example.rag.service
+    - com.example.embedding.service
+
+# Spring配置
+spring:
+  application:
+    name: ${spring.application.name:unknown}
+  
+  # 配置日志格式，包含Trace ID
+  output:
+    ansi:
+      enabled: always
+
+# 日志配置
+logging:
+  pattern:
+    # 在日志中包含Trace ID和Span ID
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-},%X{spanId:-}] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-},%X{spanId:-}] %-5level %logger{36} - %msg%n"
+  
+  level:
+    io.micrometer.tracing: DEBUG
+    brave: DEBUG
+
+# Actuator配置
+management:
+  tracing:
+    enabled: ${tracing.enabled}
+    sampling:
+      probability: ${tracing.sampling.probability}
+  
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,traces
+  
+  endpoint:
+    traces:
+      enabled: true
+  
+  # Zipkin导出配置
+  zipkin:
+    tracing:
+      endpoint: ${tracing.zipkin.endpoint}

@@ -180,3 +180,67 @@ logging:
     io.milvus: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 缓存配置
+cache:
+  # 多级缓存配置
+  multi-level:
+    enabled: true
+    # L1本地缓存（Caffeine）配置
+    caffeine:
+      initial-capacity: 100
+      maximum-size: 1000
+      expire-after-write: 300s
+      expire-after-access: 180s
+      weak-keys: false
+      weak-values: false
+      record-stats: true
+    # L2分布式缓存（Redis）配置
+    redis:
+      default-ttl: 600s
+      cache-null-values: true
+      key-prefix: "rag:cache:"
+      use-key-prefix: true
+  
+  # 预热配置
+  preheat:
+    enabled: true
+    top-n: 20
+    base-ttl: 300s
+    max-ttl: 3600s
+    initial-delay: 60000
+    fixed-rate: 600000
+  
+  # 预加载配置
+  preload:
+    enabled: true
+    max-queue-size: 50
+    threshold: 0.3
+    ttl: 300s
+    delay-ms: 1000
+  
+  # 热点检测配置
+  hot-query:
+    enabled: true
+    threshold: 10
+    time-window-hours: 1
+    top-n: 100
+    relation-threshold: 0.3
+    cleanup-rate: 3600000
+  
+  # 监控配置
+  monitor:
+    enabled: true
+    collect-rate: 300000
+    low-hit-rate-threshold: 0.5
+    high-memory-threshold: 10000
+    alert-cooldown-minutes: 10
+
+# 启用定时任务
+spring:
+  task:
+    scheduling:
+      enabled: true
+      pool:
+        size: 5
+      thread-name-prefix: cache-scheduler-
