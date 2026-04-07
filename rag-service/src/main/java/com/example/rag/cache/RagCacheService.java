@@ -1,6 +1,7 @@
 package com.example.rag.cache;
 
 import com.example.common.cache.MultiLevelCacheService;
+import com.example.rag.model.RetrievalResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;

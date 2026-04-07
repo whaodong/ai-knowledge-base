@@ -339,8 +339,8 @@ public class IndexStrategySelector {
                     .withCollectionName(collectionName)
                     .withFieldName(fieldName)
                     .withIndexName(indexName)
-                    .withIndexType(io.milvus.param.constant.IndexType.valueOf(result.getIndexType().getCode()))
-                    .withMetricType(io.milvus.param.constant.MetricType.COSINE)
+                    .withIndexType(io.milvus.param.IndexType.valueOf(result.getIndexType().getCode()))
+                    .withMetricType(io.milvus.param.MetricType.COSINE)
                     .withExtraParam(result.getIndexParams().toString());
 
             R<Boolean> response = milvusClient.createIndex(builder.build());
