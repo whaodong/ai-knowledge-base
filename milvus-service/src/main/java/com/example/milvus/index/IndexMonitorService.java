@@ -195,7 +195,7 @@ public class IndexMonitorService {
             if (indexResponse.getStatus() == R.Status.Success.getCode() && 
                 !indexResponse.getData().getIndexDescriptionsList().isEmpty()) {
                 IndexDescription desc = indexResponse.getData().getIndexDescriptions(0);
-                data.setIndexType(desc.getIndexTypeName());
+                data.setIndexType(desc.getIndexType().name());
                 
                 // 解析索引参数
                 // 实际项目中需要根据具体参数名称解析

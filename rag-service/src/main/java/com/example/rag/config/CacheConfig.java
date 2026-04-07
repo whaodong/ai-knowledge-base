@@ -75,8 +75,6 @@ public class CacheConfig {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 // 默认过期时间
                 .entryTtl(Duration.ofMinutes(10))
-                // 缓存空值
-                .cacheNullValues(true)
                 // 键序列化
                 .serializeKeysWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new StringRedisSerializer()))

@@ -237,7 +237,7 @@ public class FactConsistencyChecker {
         
         // 5. 检查否定是否一致
         boolean sourceHasNegation = containsNegation(sourceContent);
-        if (claim.hasNegation() == sourceHasNegation) {
+        if (claim.isHasNegation() == sourceHasNegation) {
             score += 0.2;
         } else {
             score -= 0.3; // 否定不一致，可能是矛盾

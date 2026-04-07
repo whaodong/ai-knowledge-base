@@ -339,11 +339,11 @@ public class IndexStrategySelector {
                     .withCollectionName(collectionName)
                     .withFieldName(fieldName)
                     .withIndexName(indexName)
-                    .withIndexType(io.milvus.common.clientenum.IndexType.valueOf(result.getIndexType().getCode()))
-                    .withMetricType(io.milvus.common.clientenum.MetricType.COSINE)
+                    .withIndexType(io.milvus.param.constant.IndexType.valueOf(result.getIndexType().getCode()))
+                    .withMetricType(io.milvus.param.constant.MetricType.COSINE)
                     .withExtraParam(result.getIndexParams().toString());
 
-            R<RpcStatus> response = milvusClient.createIndex(builder.build());
+            R<Boolean> response = milvusClient.createIndex(builder.build());
             
             if (response.getStatus() == R.Status.Success.getCode()) {
                 log.info("成功创建索引: {}, 类型: {}", indexName, result.getIndexType());

@@ -96,12 +96,12 @@ public class TokenController {
      */
     @PostMapping("/predict")
     @Operation(summary = "预测Token使用", description = "预测问题的Token使用情况")
-    public ResponseEntity<Result<TokenPredictor.TokenPrediction>> predictTokens(
+    public ResponseEntity<Result<TokenPredictor.ContextWindowPrediction>> predictTokens(
             @Parameter(description = "问题内容") @RequestParam String question,
             @Parameter(description = "上下文内容") @RequestParam(required = false) String context,
             @Parameter(description = "模型名称") @RequestParam(defaultValue = "gpt-3.5-turbo") String model) {
         
-        TokenPredictor.TokenPrediction prediction = 
+        TokenPredictor.ContextWindowPrediction prediction = 
                 ragTokenService.predictContextWindow("predict-session", question, context);
         
         return ResponseEntity.ok(Result.success(prediction));

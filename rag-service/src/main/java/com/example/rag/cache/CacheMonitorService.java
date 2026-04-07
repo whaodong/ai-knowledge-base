@@ -136,7 +136,7 @@ public class CacheMonitorService {
     private void collectRedisMetrics() {
         try {
             // 获取Redis信息
-            Properties info = redisTemplate.execute((RedisServerCommands::info));
+            Properties info = redisTemplate.execute((RedisCallback<Properties>) connection -> connection.serverCommands().info());
             
             if (info != null) {
                 long usedMemory = parseMemory(info.getProperty("used_memory", "0"));
@@ -167,7 +167,7 @@ public class CacheMonitorService {
         
         // 检查Redis内存使用
         try {
-            Properties info = redisTemplate.execute((RedisServerCommands::info));
+            Properties info = redisTemplate.execute((RedisCallback<Properties>) connection -> connection.serverCommands().info());
             if (info != null) {
                 long usedMemoryMB = parseMemory(info.getProperty("used_memory", "0")) / 1024 / 1024;
                 if (usedMemoryMB > HIGH_MEMORY_THRESHOLD) {

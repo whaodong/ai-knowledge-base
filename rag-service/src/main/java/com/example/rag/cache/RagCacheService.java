@@ -69,7 +69,7 @@ public class RagCacheService {
      * @param query 查询文本
      * @param results 搜索结果文档列表
      */
-    public void cacheSimilarityResults(String query, List<Document> results) {
+    public void cacheSimilarityResults(String query, List<RetrievalResult> results) {
         String key = generateQueryHash(query);
         cacheService.put(CACHE_SIMILARITY, key, results, SIMILARITY_TTL);
         log.debug("缓存相似度搜索结果: key={}, count={}", key, results.size());
@@ -78,9 +78,9 @@ public class RagCacheService {
     /**
      * 获取缓存的相似度搜索结果
      */
-    public List<Document> getCachedSimilarityResults(String query) {
+    public List<RetrievalResult> getCachedSimilarityResults(String query) {
         String key = generateQueryHash(query);
-        List<Document> results = cacheService.get(CACHE_SIMILARITY, key, () -> null, SIMILARITY_TTL);
+        List<RetrievalResult> results = cacheService.get(CACHE_SIMILARITY, key, () -> null, SIMILARITY_TTL);
         
         if (results != null) {
             log.debug("命中相似度搜索缓存: key={}, count={}", key, results.size());
