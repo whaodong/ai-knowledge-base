@@ -53,6 +53,7 @@
         <module>rag-service</module>
         <module>eureka-server</module>
         <module>milvus-service</module>
+        <module>gatling</module>
     </modules>
 
     <dependencyManagement>

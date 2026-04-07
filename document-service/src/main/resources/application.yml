@@ -82,3 +82,57 @@ logging:
     org.apache.tika: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 文档上传配置
+document:
+  upload:
+    path: /tmp/uploads
+    max-size: 10485760  # 10MB
+    multimodal:
+      max-size: 52428800  # 50MB
+
+# 多模态处理配置
+multimodal:
+  # 图像处理配置
+  image:
+    ocr:
+      enabled: true
+      provider: tesseract  # tesseract, baidu, google
+    description:
+      enabled: true
+      provider: gpt4v  # gpt4v, claude, local
+  
+  # 音频处理配置
+  audio:
+    asr:
+      enabled: true
+      provider: whisper  # whisper, baidu, aliyun
+    segment:
+      enabled: true
+      silence-threshold: -30
+      min-silence-duration: 0.5
+  
+  # 视频处理配置
+  video:
+    keyframe:
+      enabled: true
+      interval: 5.0  # 每5秒提取一帧
+      output-dir: /tmp/keyframes
+    asr:
+      enabled: true
+    subtitle:
+      enabled: true
+    description:
+      enabled: true
+  
+  # 向量化配置
+  embedding:
+    text:
+      model: text-embedding-3-small
+    image:
+      enabled: true
+      model: clip-vit-base-patch32
+    audio:
+      enabled: true
+    cross-modal:
+      enabled: true
