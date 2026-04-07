@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +22,7 @@ import java.util.Map;
 @RequestMapping("/api/cache-test")
 @RequiredArgsConstructor
 @Tag(name = "缓存性能测试", description = "多级缓存性能测试接口")
+@ConditionalOnBean(RedisTemplate.class)
 public class CacheTestController {
 
     private final PerformanceTestService performanceTestService;
