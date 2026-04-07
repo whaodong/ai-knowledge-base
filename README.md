@@ -146,8 +146,23 @@ java -jar api-gateway/target/api-gateway-1.0.0-SNAPSHOT.jar
 
 **RAG查询API** (RAG Service - 8083)
 - `POST /api/v1/rag/query` - RAG查询（混合检索+重排序）
-- `POST /api/v1/rag/chat` - 流式对话（SSE）
+- `POST /api/v1/rag/chat` - 流式对话（SSE，集成Token管理）
 - `GET /api/v1/rag/history/{sessionId}` - 会话历史
+
+**Token管理API** (RAG Service - 8083)
+- `POST /api/v1/tokens/count` - 计算文本Token数
+- `GET /api/v1/tokens/session/{sessionId}` - 获取会话Token统计
+- `GET /api/v1/tokens/session/{sessionId}/realtime` - 获取实时Token信息
+- `POST /api/v1/tokens/predict` - 预测Token使用
+- `GET /api/v1/tokens/user/{userId}/stats` - 获取用户Token统计
+- `GET /api/v1/tokens/trend` - 获取使用趋势分析
+- `GET /api/v1/tokens/report` - 获取Token使用报告
+- `GET /api/v1/tokens/anomalies/{userId}` - 检测异常Token使用
+- `POST /api/v1/tokens/optimize/suggestions` - 获取Token优化建议
+- `POST /api/v1/tokens/quota/{userId}` - 设置用户Token配额
+- `POST /api/v1/tokens/truncate` - 智能截断文本
+- `GET /api/v1/tokens/models` - 获取支持的模型信息
+- `POST /api/v1/tokens/adjust-topk` - 动态调整检索数量
 
 #### 详细API文档
 
@@ -170,6 +185,42 @@ java -jar api-gateway/target/api-gateway-1.0.0-SNAPSHOT.jar
 3. **相似度搜索**: Milvus 向量检索
 4. **重排序**: CrossEncoder 精排
 5. **上下文增强**: 多路检索融合
+
+### 增量式Token计数
+
+系统实现了完整的增量式Token计数功能，支持实时统计、配额管理、使用分析和智能优化：
+
+#### 流式Token计数
+- **实时统计**: 监听流式响应事件，增量累加Token数
+- **SSE支持**: 实时显示Token使用量
+- **预警机制**: 80%预警、95%临界预警
+- **性能监控**: Token计算性能追踪
+
+#### 会话Token管理
+- **累计统计**: 提问+回答Token累计
+- **配额管理**: 用户级、会话级Token配额
+- **超限处理**: 预警和自动截断
+- **历史记录**: 会话Token使用历史
+
+#### 上下文优化
+- **增量计算**: 新增内容增量Token计算
+- **差量优化**: 差量Token计算优化
+- **智能保留**: 基于重要性的上下文保留策略
+- **缓存复用**: 历史Token缓存复用
+
+#### 使用分析
+- **用户统计**: 按用户统计Token消耗
+- **趋势分析**: 按时间段分析使用趋势
+- **成本估算**: 支持多种模型定价
+- **异常检测**: 自动检测异常使用
+
+#### Token预测
+- **预估Token**: 预估回答Token数
+- **动态调整**: 动态调整检索结果数量
+- **超限预测**: 预测是否超出上下文窗口
+- **优化建议**: 智能提示词优化建议
+
+详细文档请参考：[docs/incremental-token-counting.md](docs/incremental-token-counting.md)
 
 ### 分布式特性
 

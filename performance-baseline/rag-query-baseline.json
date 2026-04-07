@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2025-04-10T00:00:00Z",
+  "environment": {
+    "java_version": "21",
+    "spring_boot_version": "3.3.0",
+    "gatling_version": "3.10.3"
+  },
+  "baselines": {
+    "rag_query": {
+      "description": "RAG查询服务性能基准",
+      "endpoints": {
+        "/api/v1/rag/query": {
+          "concurrency": 100,
+          "metrics": {
+            "mean_response_time_ms": 450,
+            "p95_response_time_ms": 1200,
+            "p99_response_time_ms": 2500,
+            "throughput_rps": 85.5,
+            "success_rate_percent": 99.2
+          }
+        }
+      }
+    }
+  }
+}
