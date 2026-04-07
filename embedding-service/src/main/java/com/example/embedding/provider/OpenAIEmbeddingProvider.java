@@ -77,9 +77,9 @@ public class OpenAIEmbeddingProvider implements EmbeddingProvider {
             
             if (response != null && !response.getResults().isEmpty()) {
                 List<Float> embedding = new ArrayList<>();
-                double[] values = response.getResults().get(0).getOutput();
-                for (double value : values) {
-                    embedding.add((float) value);
+                float[] values = response.getResults().get(0).getOutput();
+                for (float value : values) {
+                    embedding.add(value);
                 }
                 
                 long duration = System.currentTimeMillis() - startTime;
@@ -119,9 +119,9 @@ public class OpenAIEmbeddingProvider implements EmbeddingProvider {
                 for (int i = 0; i < texts.size(); i++) {
                     if (i < embeddings.size()) {
                         List<Float> embedding = new ArrayList<>();
-                        double[] values = embeddings.get(i).getOutput();
-                        for (double value : values) {
-                            embedding.add((float) value);
+                        float[] values = embeddings.get(i).getOutput();
+                        for (float value : values) {
+                            embedding.add(value);
                         }
                         
                         results.add(EmbeddingResult.success(embedding, modelType, 

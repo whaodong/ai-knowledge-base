@@ -151,9 +151,8 @@ public class EmbeddingCacheService {
         }
         
         // 获取缓存大小
-        String pattern = properties.getCache().getKeyPrefix() + "*";
-        Long size = redisTemplate.execute((connection) -> {
-            return connection.keyCommands().size();
+        Long size = redisTemplate.execute((org.springframework.data.redis.core.RedisCallback<Long>) connection -> {
+            return connection.dbSize();
         });
         stats.setCacheSize(size != null ? size : 0L);
         
