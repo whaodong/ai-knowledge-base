@@ -61,11 +61,6 @@ public class OpenAIEmbeddingProvider implements EmbeddingProvider {
         try {
             log.debug("OpenAI embedding with model: {}", modelType.getModelName());
             
-            OpenAiEmbeddingOptions options = OpenAiEmbeddingOptions.builder()
-                    .withModel(modelType.getModelName())
-                    .withDimensions(modelType.getDimension())
-                    .build();
-            
             // 使用embed方法直接获取向量
             float[] values = openAiEmbeddingModel.embed(text);
             
