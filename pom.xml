@@ -253,6 +253,11 @@
                 <artifactId>netflix-eventbus</artifactId>
                 <version>0.3.0</version>
             </dependency>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>1.2</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
