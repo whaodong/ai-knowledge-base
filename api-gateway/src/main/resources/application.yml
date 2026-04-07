@@ -5,6 +5,10 @@ spring:
   application:
     name: api-gateway
   
+  # 配置中心（可选）
+  config:
+    import: optional:configserver:http://localhost:8888
+  
   cloud:
     # 网关配置
     gateway:
