@@ -4,9 +4,9 @@ import com.example.embedding.config.EmbeddingProperties;
 import com.example.embedding.model.EmbeddingModelType;
 import com.example.embedding.model.EmbeddingResult;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.document.Document;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingResponse;
-import org.springframework.ai.openai.OpenAiEmbeddingModel;
+import org.springframework.ai.embedding.Embedding;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +25,7 @@ import java.util.List;
 public class OpenAIEmbeddingProvider implements EmbeddingProvider {
     
     @Autowired
-    private OpenAiEmbeddingModel openAiEmbeddingModel;
+    private EmbeddingModel embeddingModel;
     
     @Autowired
     private EmbeddingProperties properties;
@@ -63,12 +63,13 @@ public class OpenAIEmbeddingProvider implements EmbeddingProvider {
         try {
             log.debug("OpenAI embedding with model: {}", modelType.getModelName());
             
-            // 创建Document并调用embed
-            Document document = new Document(text);
-            EmbeddingResponse response = openAiEmbeddingModel.embedForResponse(List.of(document));
+            // 使用embedForResponse方法
+            EmbeddingResponse response = embeddingModel.embedForResponse(List.of(text));
             
             if (response != null && !response.getResults().isEmpty()) {
-                float[] values = response.getResults().get(0).getOutput();
+                Embedding embeddingResult = response.getResults().get(0);
+                float[] values = embeddingResult.getOutput();
+                
                 List<Float> embedding = new ArrayList<>();
                 for (float value : values) {
                     embedding.add(value);
@@ -96,16 +97,11 @@ public class OpenAIEmbeddingProvider implements EmbeddingProvider {
         try {
             log.debug("OpenAI batch embedding with model: {}, batch size: {}", modelType.getModelName(), texts.size());
             
-            // 批量创建Document并调用embed
-            List<Document> documents = new ArrayList<>();
-            for (String text : texts) {
-                documents.add(new Document(text));
-            }
-            
-            EmbeddingResponse response = openAiEmbeddingModel.embedForResponse(documents);
+            // 使用embedForResponse批量处理
+            EmbeddingResponse response = embeddingModel.embedForResponse(texts);
             
             if (response != null) {
-                List<org.springframework.ai.embedding.Embedding> embeddings = response.getResults();
+                List<Embedding> embeddings = response.getResults();
                 
                 for (int i = 0; i < texts.size(); i++) {
                     if (i < embeddings.size()) {
