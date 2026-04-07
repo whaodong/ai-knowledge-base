@@ -5,15 +5,14 @@ spring:
   application:
     name: rag-service
   
+  # 配置中心（可选）
+  config:
+    import: optional:configserver:http://localhost:8888
+  
   # 配置中心客户端配置
   cloud:
     config:
-      enabled: true
-      uri: http://localhost:8888
-      name: rag-service
-      profile: dev
-      label: main
-      fail-fast: true
+      enabled: false
   
   # Milvus向量数据库配置
   ai:
