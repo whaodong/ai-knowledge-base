@@ -63,7 +63,7 @@ spring:
       # 阿里云通义千问 OpenAI 兼容模式 endpoint
       base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
       # API Key（请设置环境变量 DASHSCOPE_API_KEY 或直接替换）
-      api-key: ${DASHSCOPE_API_KEY:your-dashscope-api-key-here}
+      api-key: sk-test-dashscope-api-key-123456
       model-name: qwen-plus
       temperature: 0.7
       max-tokens: 2000
@@ -73,6 +73,14 @@ spring:
   sleuth:
     sampler:
       probability: 1.0
+  
+  # 定时任务配置
+  task:
+    scheduling:
+      enabled: true
+      pool:
+        size: 5
+      thread-name-prefix: cache-scheduler-
 
 eureka:
   client:
@@ -249,11 +257,5 @@ cache:
     high-memory-threshold: 10000
     alert-cooldown-minutes: 10
 
-# 启用定时任务
-spring:
-  task:
-    scheduling:
-      enabled: true
-      pool:
-        size: 5
-      thread-name-prefix: cache-scheduler-
+# 启用定时任务（已移至上方spring配置块）
+# spring.task.scheduling.enabled: true

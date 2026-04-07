@@ -1,8 +1,12 @@
 package com.example.milvus.index;
 
 import io.milvus.client.MilvusClient;
+import io.milvus.grpc.MutationResult;
 import io.milvus.grpc.SearchResults;
+import io.milvus.param.IndexType;
+import io.milvus.param.MetricType;
 import io.milvus.param.R;
+import io.milvus.param.RpcStatus;
 import io.milvus.param.collection.*;
 import io.milvus.param.dml.InsertParam;
 import io.milvus.param.dml.SearchParam;
@@ -317,8 +321,8 @@ class IndexPerformanceTest {
                 .withCollectionName(TEST_COLLECTION)
                 .withFieldName(VECTOR_FIELD)
                 .withIndexName("test_index")
-                .withIndexType(io.milvus.common.clientenum.IndexType.valueOf(indexType.getCode()))
-                .withMetricType(io.milvus.common.clientenum.MetricType.COSINE);
+                .withIndexType(IndexType.valueOf(indexType.getCode()))
+                .withMetricType(MetricType.COSINE);
 
         if (!params.isEmpty()) {
             builder.withExtraParam(params.toString());
@@ -344,7 +348,7 @@ class IndexPerformanceTest {
         for (int i = 0; i < times; i++) {
             SearchParam param = SearchParam.newBuilder()
                     .withCollectionName(TEST_COLLECTION)
-                    .withMetricType(io.milvus.common.clientenum.MetricType.COSINE)
+                    .withMetricType(MetricType.COSINE)
                     .withTopK(10)
                     .withVectors(queryVectors)
                     .withVectorFieldName(VECTOR_FIELD)
