@@ -37,9 +37,9 @@ public class CitationValidator {
             Pattern.CASE_INSENSITIVE
     );
     
-    // 链接模式
+    // 链接模式（简化版，匹配URL直到空白字符）
     private static final Pattern URL_PATTERN = Pattern.compile(
-            "https?://[\\w\\-._~:/?#[\\]@!$&'()*+,;=%]+",
+            "https?://[^\\s]+",
             Pattern.CASE_INSENSITIVE
     );
     

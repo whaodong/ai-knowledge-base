@@ -5,6 +5,10 @@ spring:
   application:
     name: milvus-service
   
+  # 允许 bean 覆盖
+  main:
+    allow-bean-definition-overriding: true
+  
   # 配置中心（可选）
   config:
     import: optional:configserver:http://localhost:8888
