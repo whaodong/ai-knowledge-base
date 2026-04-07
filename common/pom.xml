@@ -65,6 +65,13 @@
             <version>${mapstruct.version}</version>
         </dependency>
         
+        <!-- Token计数 -->
+        <dependency>
+            <groupId>com.knuddels</groupId>
+            <artifactId>jtokkit</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        
         <!-- JSON处理 -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
