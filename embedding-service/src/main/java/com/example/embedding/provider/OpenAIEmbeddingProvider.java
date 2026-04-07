@@ -4,6 +4,8 @@ import com.example.embedding.config.EmbeddingProperties;
 import com.example.embedding.model.EmbeddingModelType;
 import com.example.embedding.model.EmbeddingResult;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.openai.OpenAiEmbeddingModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -61,10 +63,12 @@ public class OpenAIEmbeddingProvider implements EmbeddingProvider {
         try {
             log.debug("OpenAI embedding with model: {}", modelType.getModelName());
             
-            // 使用embed方法直接获取向量
-            float[] values = openAiEmbeddingModel.embed(text);
+            // 创建Document并调用embed
+            Document document = new Document(text);
+            EmbeddingResponse response = openAiEmbeddingModel.embedForResponse(List.of(document));
             
-            if (values != null && values.length > 0) {
+            if (response != null && !response.getResults().isEmpty()) {
+                float[] values = response.getResults().get(0).getOutput();
                 List<Float> embedding = new ArrayList<>();
                 for (float value : values) {
                     embedding.add(value);
@@ -92,12 +96,20 @@ public class OpenAIEmbeddingProvider implements EmbeddingProvider {
         try {
             log.debug("OpenAI batch embedding with model: {}, batch size: {}", modelType.getModelName(), texts.size());
             
-            // 使用embed方法逐个处理
+            // 批量创建Document并调用embed
+            List<Document> documents = new ArrayList<>();
             for (String text : texts) {
-                try {
-                    float[] values = openAiEmbeddingModel.embed(text);
-                    
-                    if (values != null && values.length > 0) {
+                documents.add(new Document(text));
+            }
+            
+            EmbeddingResponse response = openAiEmbeddingModel.embedForResponse(documents);
+            
+            if (response != null) {
+                List<org.springframework.ai.embedding.Embedding> embeddings = response.getResults();
+                
+                for (int i = 0; i < texts.size(); i++) {
+                    if (i < embeddings.size()) {
+                        float[] values = embeddings.get(i).getOutput();
                         List<Float> embedding = new ArrayList<>();
                         for (float value : values) {
                             embedding.add(value);
@@ -106,11 +118,8 @@ public class OpenAIEmbeddingProvider implements EmbeddingProvider {
                         results.add(EmbeddingResult.success(embedding, modelType, 
                             System.currentTimeMillis() - startTime, false));
                     } else {
-                        results.add(EmbeddingResult.failure("Empty embedding response"));
+                        results.add(EmbeddingResult.failure("Missing embedding at index " + i));
                     }
-                } catch (Exception e) {
-                    log.error("Embedding failed for text: {}", e.getMessage());
-                    results.add(EmbeddingResult.failure("Embedding failed: " + e.getMessage()));
                 }
             }
             
