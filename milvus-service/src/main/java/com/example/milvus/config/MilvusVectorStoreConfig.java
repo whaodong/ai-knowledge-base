@@ -6,6 +6,7 @@ import io.milvus.param.ConnectParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -79,6 +80,7 @@ public class MilvusVectorStoreConfig {
      * </ul>
      */
     @Bean
+    @ConditionalOnMissingBean
     public MilvusClient milvusClient() {
         log.info("初始化Milvus客户端: host={}, port={}, database={}", host, port, database);
         log.info("连接池配置: channelPoolSize={}, maxIdlePerChannel={}, maxTotal={}", 

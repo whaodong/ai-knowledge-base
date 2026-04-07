@@ -2,6 +2,7 @@ package com.example.rag.cache;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
+@ConditionalOnBean(RedisTemplate.class)
 public class HotQueryDetector {
 
     private final RedisTemplate<String, Object> redisTemplate;

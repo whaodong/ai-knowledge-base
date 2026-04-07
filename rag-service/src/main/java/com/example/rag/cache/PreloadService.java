@@ -6,6 +6,7 @@ import com.example.rag.model.RagResponse;
 import com.example.rag.service.RagRetrievalService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -27,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Slf4j
 @Service
+@ConditionalOnBean({HotQueryDetector.class, RagCacheService.class})
 public class PreloadService {
 
     private final HotQueryDetector hotQueryDetector;

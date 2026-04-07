@@ -7,6 +7,7 @@ import com.example.rag.cache.RagCacheService;
 import com.example.rag.model.RagRequest;
 import com.example.rag.model.RagResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 /**
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
+@ConditionalOnBean({RagCacheService.class, HotQueryDetector.class})
 public class CachedRagRetrievalService {
 
     private final RagRetrievalService ragRetrievalService;
