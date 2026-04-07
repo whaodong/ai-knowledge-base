@@ -194,7 +194,7 @@ public class DocumentController {
         
         documentService.deleteDocument(id);
         
-        return ResponseEntity.ok(Result.success(null));
+        return ResponseEntity.ok(Result.success());
     }
 
     /**
@@ -218,7 +218,7 @@ public class DocumentController {
         
         documentService.batchDeleteDocuments(ids);
         
-        return ResponseEntity.ok(Result.success(null));
+        return ResponseEntity.ok(Result.success());
     }
 
     /**
