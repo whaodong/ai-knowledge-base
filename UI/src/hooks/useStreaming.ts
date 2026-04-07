@@ -1,0 +1,60 @@
+import { useState, useCallback, useRef } from 'react'
+import { message } from 'antd'
+import { ragApi } from '@/api/rag'
+import { useChatStore } from '@/stores/chatStore'
+
+export const useStreaming = (sessionId: string) => {
+  const [isStreaming, setIsStreaming] = useState(false)
+  const eventSourceRef = useRef<EventSource | null>(null)
+  const { addMessage } = useChatStore()
+
+  const sendMessage = useCallback((content: string) => {
+    if (isStreaming) return
+
+    const userMessage = {
+      id: `msg-${Date.now()}-user`,
+      role: 'user' as const,
+      content,
+      timestamp: new Date().toISOString()
+    }
+    addMessage(sessionId, userMessage)
+
+    const assistantMessageId = `msg-${Date.now()}-assistant`
+    addMessage(sessionId, {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString()
+    })
+
+    setIsStreaming(true)
+    const url = ragApi.getStreamingUrl(content)
+    const eventSource = new EventSource(url)
+    eventSourceRef.current = eventSource
+
+    let fullContent = ''
+
+    eventSource.onmessage = (event) => {
+      fullContent += event.data
+      useChatStore.getState().addMessage(sessionId, {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: fullContent,
+        timestamp: new Date().toISOString()
+      })
+    }
+
+    eventSource.onerror = () => {
+      eventSource.close()
+      setIsStreaming(false)
+      message.error('连接失败')
+    }
+  }, [sessionId, isStreaming, addMessage])
+
+  const stopStreaming = useCallback(() => {
+    eventSourceRef.current?.close()
+    setIsStreaming(false)
+  }, [])
+
+  return { isStreaming, sendMessage, stopStreaming }
+}
