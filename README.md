@@ -310,3 +310,112 @@ MIT License
 ## 贡献
 
 欢迎提交 Issue 和 Pull Request！
+
+## 监控与告警系统
+
+本系统集成了完善的监控和告警体系，基于Prometheus + Alertmanager + Grafana构建。
+
+### 核心功能
+
+1. **性能基线告警**
+   - RAG查询P99延迟监控（基线3000ms）
+   - 向量化延迟监控（基线500ms）
+   - Milvus查询延迟监控（基线100ms）
+   - 缓存命中率监控（基线70%）
+   - Token使用率监控（基线80%）
+
+2. **多级告警体系**
+   - **P0（紧急）**: 服务宕机、数据丢失、错误率>10%
+   - **P1（严重）**: 性能下降>50%、错误率>5%、内存>90%
+   - **P2（警告）**: 性能下降>20%、缓存命中率<50%、内存>85%
+   - **P3（提示）**: 资源使用预警、趋势分析
+
+3. **通知渠道**
+   - 邮件通知（所有级别）
+   - Slack（P0-P2）
+   - 企业微信/钉钉（P0-P1）
+   - 短信/电话（P0）
+
+### 快速开始
+
+```bash
+# 启动监控系统
+cd monitoring
+docker-compose up -d
+
+# 访问监控界面
+# Prometheus: http://localhost:9090
+# Alertmanager: http://localhost:9093
+# Grafana: http://localhost:3000 (admin/admin)
+
+# 运行告警测试
+./test-alerts.sh
+
+# 验证性能基线
+./test-alerts.sh
+# 选择选项10: 验证性能基线
+```
+
+### 告警测试
+
+```bash
+# 测试P0级别告警（服务宕机）
+curl -X POST http://localhost:9093/api/v1/alerts \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "labels": {
+        "alertname": "ServiceDown",
+        "severity": "critical",
+        "priority": "P0",
+        "instance": "test-service:8080"
+      },
+      "annotations": {
+        "summary": "测试服务宕机",
+        "description": "测试实例已宕机"
+      },
+      "startsAt": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
+    }
+  ]'
+
+# 查询活跃告警
+curl http://localhost:9093/api/v1/alerts
+```
+
+### 性能基线验证
+
+```bash
+# RAG查询P99延迟
+curl -s 'http://localhost:9090/api/v1/query?query=histogram_quantile(0.99,rate(rag_query_latency_seconds_bucket[5m]))'
+
+# 缓存命中率
+curl -s 'http://localhost:9090/api/v1/query?query=rate(rag_cache_hits_total[5m])/(rate(rag_cache_hits_total[5m])+rate(rag_cache_misses_total[5m]))'
+
+# Milvus查询延迟
+curl -s 'http://localhost:9090/api/v1/query?query=histogram_quantile(0.99,rate(milvus_query_latency_seconds_bucket[5m]))'
+```
+
+### 监控配置文件
+
+- `monitoring/performance-baselines.yml` - 性能基线配置
+- `monitoring/alert.rules.yml` - 告警规则（包含P0-P3多级告警）
+- `monitoring/alertmanager.yml` - Alertmanager完整配置
+- `monitoring/prometheus.yml` - Prometheus配置
+- `monitoring/grafana/alert-dashboard.json` - Grafana告警仪表盘
+- `monitoring/test-alerts.sh` - 告警测试脚本
+
+详细文档请参考：[告警测试文档](monitoring/docs/alert-testing-guide.md)
+
+## 持续集成
+
+本项目使用 GitHub Actions 实现持续集成和持续部署。
+
+### CI/CD 流程
+
+1. **代码检查**: 代码风格检查、单元测试
+2. **构建**: Maven 构建和打包
+3. **测试**: 自动化测试
+4. **部署**: Docker 镜像构建和推送
+
+查看构建状态：
+- [GitHub Actions](https://github.com/whaodong/ai-knowledge-base/actions)

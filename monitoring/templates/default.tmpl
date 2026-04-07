@@ -1,0 +1,114 @@
+{{ define "subject" }}
+[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.FiringArgs.Labels.severity }}{{ end }}] {{ .GroupLabels.alertname }}
+{{ end }}
+
+{{ define "email.html" }}
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: Arial, sans-serif; }
+  .alert { padding: 15px; margin: 10px 0; border-radius: 5px; }
+  .critical { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+  .warning { background-color: #fff3cd; border: 1px solid #ffeeba; }
+  .info { background-color: #d1ecf1; border: 1px solid #bee5eb; }
+  .resolved { background-color: #d4edda; border: 1px solid #c3e6cb; }
+  h2 { margin-top: 0; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+  th { background-color: #f2f2f2; }
+</style>
+</head>
+<body>
+<h2>{{ template "subject" . }}</h2>
+
+{{ if .Alerts.Firing }}
+<h3>Firing Alerts ({{ .Alerts.Firing | len }})</h3>
+{{ range .Alerts.Firing }}
+<div class="alert {{ .Labels.severity }}">
+  <h4>{{ .Labels.alertname }}</h4>
+  <table>
+    <tr>
+      <th>实例</th>
+      <td>{{ .Labels.instance }}</td>
+    </tr>
+    <tr>
+      <th>严重级别</th>
+      <td>{{ .Labels.severity }}</td>
+    </tr>
+    <tr>
+      <th>优先级</th>
+      <td>{{ .Labels.priority }}</td>
+    </tr>
+    <tr>
+      <th>团队</th>
+      <td>{{ .Labels.team }}</td>
+    </tr>
+    <tr>
+      <th>描述</th>
+      <td>{{ .Annotations.description }}</td>
+    </tr>
+    <tr>
+      <th>影响</th>
+      <td>{{ .Annotations.impact }}</td>
+    </tr>
+    <tr>
+      <th>建议操作</th>
+      <td>{{ .Annotations.action }}</td>
+    </tr>
+    {{ if .Annotations.runbook_url }}
+    <tr>
+      <th>运维手册</th>
+      <td><a href="{{ .Annotations.runbook_url }}">查看详情</a></td>
+    </tr>
+    {{ end }}
+    <tr>
+      <th>开始时间</th>
+      <td>{{ .StartsAt }}</td>
+    </tr>
+  </table>
+</div>
+{{ end }}
+{{ end }}
+
+{{ if .Alerts.Resolved }}
+<h3>Resolved Alerts ({{ .Alerts.Resolved | len }})</h3>
+{{ range .Alerts.Resolved }}
+<div class="alert resolved">
+  <h4>{{ .Labels.alertname }}</h4>
+  <p>实例: {{ .Labels.instance }}</p>
+  <p>持续时间: {{ .StartsAt }} - {{ .EndsAt }}</p>
+</div>
+{{ end }}
+{{ end }}
+
+<hr>
+<p><small>由 Alertmanager 在 {{ .ExternalURL }} 生成</small></p>
+</body>
+</html>
+{{ end }}
+
+{{ define "slack.text" }}
+{{ if eq .Status "firing" }}
+:{{ if eq .GroupLabels.severity "critical" }}rotating_light{{ else if eq .GroupLabels.severity "warning" }}warning{{ else }}information_source{{ end }}: 
+{{ else }}
+:white_check_mark: 
+{{ end }}
+*{{ .GroupLabels.alertname }}*
+{{ range .Alerts.Firing }}
+{{ .Annotations.description }}
+{{ end }}
+{{ end }}
+
+{{ define "wechat.text" }}
+{{ if eq .Status "firing" }}
+{{ if eq .GroupLabels.severity "critical" }}🚨 P0紧急{{ else if eq .GroupLabels.severity "warning" }}⚠️ P1严重{{ else }}ℹ️ 提示{{ end }}
+{{ else }}
+✅ 已恢复
+{{ end }}
+告警: {{ .GroupLabels.alertname }}
+实例: {{ .GroupLabels.instance }}
+{{ range .Alerts.Firing }}
+描述: {{ .Annotations.description }}
+{{ end }}
+{{ end }}

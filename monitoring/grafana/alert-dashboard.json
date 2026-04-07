@@ -1,0 +1,536 @@
+{
+  "dashboard": {
+    "title": "AI知识库 - 告警仪表盘",
+    "uid": "ai-kb-alerts",
+    "tags": ["alerts", "monitoring", "ai-knowledge-base"],
+    "timezone": "browser",
+    "refresh": "30s",
+    "panels": [
+      {
+        "title": "告警概览",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "count(ALERTS{alertstate=\"firing\"})",
+            "legendFormat": "活跃告警",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 5, "color": "orange"},
+                {"value": 10, "color": "red"}
+              ]
+            },
+            "mappings": [],
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "title": "P0告警数量",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 0, "w": 3, "h": 4},
+        "targets": [
+          {
+            "expr": "count(ALERTS{alertstate=\"firing\",priority=\"P0\"})",
+            "legendFormat": "P0",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "red"}
+              ]
+            },
+            "mappings": [],
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "title": "P1告警数量",
+        "type": "stat",
+        "gridPos": {"x": 9, "y": 0, "w": 3, "h": 4},
+        "targets": [
+          {
+            "expr": "count(ALERTS{alertstate=\"firing\",priority=\"P1\"})",
+            "legendFormat": "P1",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "orange"}
+              ]
+            },
+            "mappings": [],
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "title": "P2告警数量",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 0, "w": 3, "h": 4},
+        "targets": [
+          {
+            "expr": "count(ALERTS{alertstate=\"firing\",priority=\"P2\"})",
+            "legendFormat": "P2",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"}
+              ]
+            },
+            "mappings": [],
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "title": "P3告警数量",
+        "type": "stat",
+        "gridPos": {"x": 15, "y": 0, "w": 3, "h": 4},
+        "targets": [
+          {
+            "expr": "count(ALERTS{alertstate=\"firing\",priority=\"P3\"})",
+            "legendFormat": "P3",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "blue"}
+              ]
+            },
+            "mappings": [],
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "title": "服务可用性",
+        "type": "stat",
+        "gridPos": {"x": 18, "y": 0, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "avg(avg_over_time(up[1h])) * 100",
+            "legendFormat": "可用性 %",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 95, "color": "yellow"},
+                {"value": 99, "color": "green"}
+              ]
+            },
+            "mappings": [],
+            "unit": "percent"
+          }
+        }
+      },
+      {
+        "title": "RAG查询P99延迟趋势",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 4, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, rate(rag_query_latency_seconds_bucket[5m])) * 1000",
+            "legendFormat": "P99延迟 (ms)",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(rag_query_latency_seconds_bucket[5m])) * 1000",
+            "legendFormat": "P95延迟 (ms)",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "ms", "label": "延迟"}
+        ],
+        "thresholds": [
+          {
+            "value": 3000,
+            "colorMode": "critical",
+            "fill": true,
+            "line": true,
+            "op": "gt"
+          }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [3000], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "message": "RAG查询P99延迟超过3000ms基线",
+          "name": "RAG P99延迟告警"
+        }
+      },
+      {
+        "title": "缓存命中率趋势",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 4, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "rate(rag_cache_hits_total[5m]) / (rate(rag_cache_hits_total[5m]) + rate(rag_cache_misses_total[5m]))",
+            "legendFormat": "命中率",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "label": "命中率", "max": 1, "min": 0}
+        ],
+        "thresholds": [
+          {
+            "value": 0.7,
+            "colorMode": "custom",
+            "fill": true,
+            "fillColor": "rgba(50, 116, 217, 0.2)",
+            "line": true,
+            "lineColor": "rgb(50, 116, 217)",
+            "op": "lt"
+          },
+          {
+            "value": 0.5,
+            "colorMode": "critical",
+            "fill": true,
+            "line": true,
+            "op": "lt"
+          }
+        ]
+      },
+      {
+        "title": "Milvus查询性能",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 10, "w": 8, "h": 6},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, rate(milvus_query_latency_seconds_bucket[5m])) * 1000",
+            "legendFormat": "P99 (ms)",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(milvus_query_latency_seconds_bucket[5m])) * 1000",
+            "legendFormat": "P95 (ms)",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "ms", "label": "延迟"}
+        ],
+        "thresholds": [
+          {
+            "value": 300,
+            "colorMode": "critical",
+            "fill": true,
+            "line": true,
+            "op": "gt"
+          }
+        ]
+      },
+      {
+        "title": "向量化延迟",
+        "type": "graph",
+        "gridPos": {"x": 8, "y": 10, "w": 8, "h": 6},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(embedding_latency_seconds_bucket[5m])) * 1000",
+            "legendFormat": "P95 (ms)",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "ms", "label": "延迟"}
+        ],
+        "thresholds": [
+          {
+            "value": 500,
+            "colorMode": "critical",
+            "fill": true,
+            "line": true,
+            "op": "gt"
+          }
+        ]
+      },
+      {
+        "title": "Token使用率",
+        "type": "graph",
+        "gridPos": {"x": 16, "y": 10, "w": 8, "h": 6},
+        "targets": [
+          {
+            "expr": "sum(rate(llm_token_usage_total[5m])) / sum(rate(llm_token_limit_total[5m]))",
+            "legendFormat": "使用率",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "label": "使用率", "max": 1, "min": 0}
+        ],
+        "thresholds": [
+          {
+            "value": 0.8,
+            "colorMode": "custom",
+            "fill": true,
+            "fillColor": "rgba(237, 129, 40, 0.2)",
+            "line": true,
+            "lineColor": "rgb(237, 129, 40)",
+            "op": "gt"
+          }
+        ]
+      },
+      {
+        "title": "JVM内存使用率",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{area=\"heap\"} / jvm_memory_max_bytes{area=\"heap\"}",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "label": "使用率", "max": 1, "min": 0}
+        ],
+        "thresholds": [
+          {
+            "value": 0.85,
+            "colorMode": "custom",
+            "fill": true,
+            "fillColor": "rgba(237, 129, 40, 0.2)",
+            "line": true,
+            "lineColor": "rgb(237, 129, 40)",
+            "op": "gt"
+          },
+          {
+            "value": 0.9,
+            "colorMode": "critical",
+            "fill": true,
+            "line": true,
+            "op": "gt"
+          }
+        ]
+      },
+      {
+        "title": "CPU使用率",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "system_cpu_usage",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "label": "使用率", "max": 1, "min": 0}
+        ],
+        "thresholds": [
+          {
+            "value": 0.85,
+            "colorMode": "critical",
+            "fill": true,
+            "line": true,
+            "op": "gt"
+          }
+        ]
+      },
+      {
+        "title": "错误率趋势",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 22, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m]))",
+            "legendFormat": "错误率",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "label": "错误率", "max": 0.5, "min": 0}
+        ],
+        "thresholds": [
+          {
+            "value": 0.05,
+            "colorMode": "critical",
+            "fill": true,
+            "line": true,
+            "op": "gt"
+          }
+        ]
+      },
+      {
+        "title": "告警历史",
+        "type": "table",
+        "gridPos": {"x": 12, "y": 22, "w": 12, "h": 6},
+        "targets": [
+          {
+            "expr": "ALERTS{alertstate=\"firing\"}",
+            "format": "table",
+            "instant": true,
+            "legendFormat": "",
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "Value": true,
+                "alertstate": true
+              },
+              "indexByName": {
+                "alertname": 0,
+                "severity": 1,
+                "priority": 2,
+                "instance": 3
+              },
+              "renameByName": {
+                "alertname": "告警名称",
+                "severity": "严重级别",
+                "priority": "优先级",
+                "instance": "实例"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "title": "性能基线对比",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 28, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, rate(rag_query_latency_seconds_bucket[5m])) * 1000",
+            "format": "table",
+            "instant": true,
+            "legendFormat": "RAG P99延迟",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(rag_cache_hits_total[5m]) / (rate(rag_cache_hits_total[5m]) + rate(rag_cache_misses_total[5m]))",
+            "format": "table",
+            "instant": true,
+            "legendFormat": "缓存命中率",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(milvus_query_latency_seconds_bucket[5m])) * 1000",
+            "format": "table",
+            "instant": true,
+            "legendFormat": "Milvus P99延迟",
+            "refId": "C"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "seriesToColumns",
+            "options": {
+              "byField": "Time"
+            }
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true
+              },
+              "renameByName": {
+                "Value #A": "RAG P99延迟(ms)",
+                "Value #B": "缓存命中率",
+                "Value #C": "Milvus P99延迟(ms)"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "schemaVersion": 27,
+    "version": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
+    }
+  },
+  "overwrite": true
+}

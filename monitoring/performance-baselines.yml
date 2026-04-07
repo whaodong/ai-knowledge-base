@@ -1,0 +1,193 @@
+# 性能基线配置
+# 定义各服务的性能基准指标和阈值
+
+# ========================================
+# RAG服务性能基线
+# ========================================
+rag_service:
+  # 查询性能
+  query:
+    p50_latency_ms: 500       # P50延迟基线
+    p95_latency_ms: 1500      # P95延迟基线
+    p99_latency_ms: 3000      # P99延迟基线
+    max_latency_ms: 5000      # 最大延迟基线
+    
+  # 向量化性能
+  embedding:
+    latency_ms: 500           # 向量化延迟基线
+    batch_latency_ms: 2000    # 批量向量化延迟基线
+    throughput_qps: 100       # 吞吐量基线
+    
+  # 缓存性能
+  cache:
+    hit_rate: 0.7             # 缓存命中率基线
+    avg_lookup_ms: 10         # 平均缓存查询延迟
+    
+  # Token使用
+  token:
+    usage_rate: 0.8           # Token使用率基线
+    avg_per_query: 500        # 平均每次查询Token数
+
+# ========================================
+# Milvus服务性能基线
+# ========================================
+milvus_service:
+  # 查询性能
+  query:
+    latency_ms: 100           # 查询延迟基线
+    search_latency_ms: 150    # 搜索延迟基线
+    p99_latency_ms: 300       # P99延迟基线
+    
+  # 写入性能
+  insert:
+    latency_ms: 50            # 插入延迟基线
+    batch_latency_ms: 200     # 批量插入延迟基线
+    throughput_qps: 1000      # 写入吞吐量基线
+    
+  # 索引性能
+  index:
+    build_time_sec: 60        # 索引构建时间基线
+    load_time_sec: 30         # 索引加载时间基线
+
+# ========================================
+# 文档服务性能基线
+# ========================================
+document_service:
+  # 文档处理
+  processing:
+    parse_time_ms: 500        # 解析时间基线
+    chunk_time_ms: 200        # 分块时间基线
+    
+  # 存储
+  storage:
+    write_latency_ms: 100     # 写入延迟基线
+    read_latency_ms: 50       # 读取延迟基线
+    
+  # 批量处理
+  batch:
+    throughput_docs_per_min: 100  # 每分钟处理文档数
+
+# ========================================
+# Embedding服务性能基线
+# ========================================
+embedding_service:
+  # 向量化性能
+  embedding:
+    single_latency_ms: 100    # 单文档向量化延迟
+    batch_latency_ms: 500     # 批量向量化延迟
+    throughput_qps: 50        # 吞吐量基线
+    
+  # 模型性能
+  model:
+    load_time_sec: 30         # 模型加载时间
+    inference_time_ms: 80     # 推理时间
+
+# ========================================
+# 系统资源基线
+# ========================================
+system:
+  # JVM内存
+  jvm:
+    heap_usage_rate: 0.75     # 堆内存使用率基线
+    gc_pause_ms: 100          # GC暂停时间基线
+    gc_frequency_per_min: 5   # 每分钟GC频率
+    
+  # CPU
+  cpu:
+    usage_rate: 0.7           # CPU使用率基线
+    load_avg: 4               # 平均负载基线
+    
+  # 网络
+  network:
+    io_throughput_mbps: 100   # 网络吞吐量基线
+    connection_count: 1000    # 连接数基线
+    
+  # 磁盘
+  disk:
+    usage_rate: 0.75          # 磁盘使用率基线
+    io_utilization: 0.6       # IO利用率基线
+
+# ========================================
+# 告警阈值配置
+# ========================================
+alert_thresholds:
+  # P0级别 - 紧急
+  p0:
+    service_down: true        # 服务宕机
+    data_loss: true           # 数据丢失
+    error_rate: 0.1           # 错误率>10%
+    
+  # P1级别 - 严重
+  p1:
+    performance_degradation: 0.5    # 性能下降>50%
+    error_rate: 0.05                # 错误率>5%
+    memory_usage: 0.9               # 内存使用>90%
+    
+  # P2级别 - 警告
+  p2:
+    performance_degradation: 0.2    # 性能下降>20%
+    cache_hit_rate: 0.5             # 缓存命中率<50%
+    memory_usage: 0.85              # 内存使用>85%
+    
+  # P3级别 - 提示
+  p3:
+    resource_usage: 0.75            # 资源使用率预警
+    connection_count: 800           # 连接数预警
+
+# ========================================
+# 趋势分析配置
+# ========================================
+trend_analysis:
+  # 时间窗口
+  windows:
+    short_term: 5m            # 短期窗口
+    medium_term: 1h           # 中期窗口
+    long_term: 24h            # 长期窗口
+    
+  # 趋势告警
+  alerts:
+    increasing_rate: 0.3      # 增长率>30%
+    decreasing_rate: -0.3     # 下降率>30%
+    volatility: 0.5           # 波动率>50%
+
+# ========================================
+# 容量规划基线
+# ========================================
+capacity_planning:
+  # 扩容阈值
+  scale_out:
+    cpu_threshold: 0.8        # CPU使用率触发扩容
+    memory_threshold: 0.85    # 内存使用率触发扩容
+    latency_threshold: 3000   # 延迟触发扩容(ms)
+    
+  # 缩容阈值
+  scale_in:
+    cpu_threshold: 0.3        # CPU使用率触发缩容
+    memory_threshold: 0.4     # 内存使用率触发缩容
+    
+  # 预测配置
+  prediction:
+    horizon_hours: 24         # 预测时间范围
+    confidence_interval: 0.95 # 置信区间
+
+# ========================================
+# SLA定义
+# ========================================
+sla:
+  # 可用性
+  availability:
+    target: 0.999            # 99.9%可用性
+    measurement_window: 30d  # 衡量窗口
+    
+  # 响应时间
+  response_time:
+    p95_target_ms: 1500      # P95响应时间目标
+    p99_target_ms: 3000      # P99响应时间目标
+    
+  # 错误率
+  error_rate:
+    target: 0.001            # 错误率目标<0.1%
+    
+  # 数据持久性
+  durability:
+    target: 0.999999         # 99.9999%数据持久性
