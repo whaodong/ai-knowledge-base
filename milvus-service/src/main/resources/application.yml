@@ -30,6 +30,46 @@ milvus:
     search-params: ${MILVUS_SEARCH_PARAMS:{"ef":64}}
     create-if-not-exist: ${MILVUS_CREATE_IF_NOT_EXIST:true}
 
+  # 索引优化配置
+  index:
+    # IVF_FLAT索引配置
+    ivf-flat:
+      enabled: true
+      nlist: 1024          # 聚类中心数量，建议 sqrt(n)
+      nprobe: 64           # 查询时搜索的聚类数
+
+    # HNSW索引配置
+    hnsw:
+      enabled: true
+      m: 16                # 每层最大连接数
+      ef-construction: 200 # 构建时的搜索范围
+      ef: 64               # 查询时的搜索范围
+
+    # IVF_PQ索引配置
+    ivf-pq:
+      enabled: true
+      nlist: 1024
+      nprobe: 64
+      nbits: 8             # 量化位数
+      m-pq: 8              # 子向量数量
+
+    # 自动选择策略配置
+    auto-select:
+      enabled: true
+      small-dataset-threshold: 100000      # 小数据集阈值
+      medium-dataset-threshold: 1000000    # 中等数据集阈值
+      large-dataset-threshold: 10000000    # 大数据集阈值
+      memory-limit-gb: 16.0                # 内存限制(GB)
+      consider-memory: true                # 是否考虑内存因素
+      recall-requirement: 0.95             # 召回率要求
+
+    # 索引重建阈值配置
+    rebuild-threshold:
+      growth-ratio: 0.3                   # 数据增长比例阈值
+      min-rebuild-interval-hours: 24      # 最小重建间隔(小时)
+      latency-growth-ratio: 0.5           # 查询延迟增长阈值
+      auto-suggest: true                   # 启用自动建议
+
 # 监控配置
 management:
   endpoints:
