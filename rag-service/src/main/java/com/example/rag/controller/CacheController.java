@@ -3,6 +3,8 @@ package com.example.rag.controller;
 import com.example.rag.cache.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/cache")
 @RequiredArgsConstructor
+@ConditionalOnBean(RedisTemplate.class)
 public class CacheController {
 
     private final CachePreheatService cachePreheatService;
