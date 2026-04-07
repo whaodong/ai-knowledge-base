@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: config-server
+  profiles:
+    active: native
   
   cloud:
     config:
@@ -14,7 +16,7 @@ spring:
         default-application-name: ai-knowledge-base
         # 配置加密支持
         encrypt:
-          enabled: true
+          enabled: false
   
   # 多环境配置文件模板位置
   config:
