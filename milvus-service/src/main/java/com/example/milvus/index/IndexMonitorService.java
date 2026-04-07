@@ -195,7 +195,8 @@ public class IndexMonitorService {
             if (indexResponse.getStatus() == R.Status.Success.getCode() && 
                 !indexResponse.getData().getIndexDescriptionsList().isEmpty()) {
                 IndexDescription desc = indexResponse.getData().getIndexDescriptions(0);
-                data.setIndexType(desc.getIndexTypeName());
+                // 从索引描述中获取索引名称，类型信息需要通过其他方式获取
+                data.setIndexType(desc.getIndexName());
                 
                 // 解析索引参数
                 // 实际项目中需要根据具体参数名称解析
