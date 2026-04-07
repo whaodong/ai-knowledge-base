@@ -1,0 +1,49 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  instance:
+    hostname: localhost
+    # 服务续约配置（企业级优化）
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+    # 启用IP地址注册
+    prefer-ip-address: true
+    # 实例ID格式
+    instance-id: ${spring.cloud.client.hostname}:${spring.application.name}:${server.port}
+    
+  client:
+    # 关闭自注册（单节点模式）
+    register-with-eureka: false
+    fetch-registry: false
+    # 服务注册地址
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+    
+  server:
+    # 自我保护模式（生产环境建议关闭）
+    enable-self-preservation: true
+    # 清理无效服务间隔（毫秒）
+    eviction-interval-timer-in-ms: 60000
+    # 响应缓存更新间隔
+    response-cache-update-interval-ms: 30000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.netflix.eureka: INFO
+    com.netflix.discovery: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

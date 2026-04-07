@@ -1,0 +1,57 @@
+# RAG服务 - 开发环境配置
+server:
+  port: 8083
+
+spring:
+  application:
+    name: rag-service
+  
+  # Spring AI配置
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:sk-demo-key}
+      chat:
+        model: gpt-4
+        options:
+          temperature: 0.7
+          max-tokens: 2000
+  
+  # 服务注册与发现
+  cloud:
+    discovery:
+      enabled: true
+
+# RAG检索配置
+rag:
+  retrieval:
+    top-k: 5
+    similarity-threshold: 0.7
+    max-context-length: 4000
+  
+  # 向量数据库配置
+  vector-db:
+    type: memory
+    host: localhost
+    port: 19530
+    collection-name: knowledge_base
+    dimension: 1536
+  
+  # 缓存配置
+  cache:
+    enabled: true
+    ttl-minutes: 30
+
+# 服务注册与发现
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# 日志配置
+logging:
+  level:
+    com.example.rag: DEBUG
+    org.springframework.ai.retry: DEBUG

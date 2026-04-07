@@ -1,0 +1,63 @@
+# 文档服务 - 测试环境配置
+server:
+  port: 8081
+
+spring:
+  application:
+    name: document-service
+  
+  # 数据库配置（测试环境使用MySQL）
+  datasource:
+    url: jdbc:mysql://test-mysql:3306/document_db?useSSL=false&serverTimezone=UTC
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: test_user
+    password: test_password
+  
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  
+  # Redis缓存配置（测试环境使用集群）
+  data:
+    redis:
+      cluster:
+        nodes: 
+          - test-redis-1:6379
+          - test-redis-2:6379
+          - test-redis-3:6379
+      password: test_redis_password
+      database: 0
+  
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+# Spring AI配置
+spring:
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY}
+      chat:
+        model: gpt-4
+        options:
+          temperature: 0.5
+          max-tokens: 4000
+
+# 服务注册与发现
+eureka:
+  client:
+    service-url:
+      defaultZone: http://test-eureka:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# 测试环境特定配置
+test:
+  mode: true
+  mock-external-apis: true
+  document-storage-path: /data/test/documents

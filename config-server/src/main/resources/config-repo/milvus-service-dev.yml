@@ -1,0 +1,91 @@
+# Milvus服务开发环境配置
+server:
+  port: 8086
+
+spring:
+  application:
+    name: milvus-service
+  
+  # 服务发现配置
+  cloud:
+    config:
+      enabled: false  # 在配置中心配置中禁用自身配置
+    
+  # 数据源配置（如果需要连接关系型数据库）
+  datasource:
+    url: jdbc:h2:mem:milvusdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+
+# Milvus向量数据库配置
+milvus:
+  host: localhost
+  port: 19530
+  database: default
+  collection:
+    name: knowledge_base
+    vector-dimension: 1536  # OpenAI text-embedding-ada-002维度
+    index-type: HNSW
+    metric-type: COSINE
+    index-params: '{"M":16,"efConstruction":200}'
+    search-params: '{"ef":64}'
+    create-if-not-exist: true
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 1m
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+# 日志配置
+logging:
+  level:
+    com.example.milvus: DEBUG
+    io.milvus: INFO
+  file:
+    name: logs/milvus-service.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+
+# 性能调优
+spring:
+  # Web服务器配置
+  mvc:
+    async:
+      request-timeout: 30s
+  
+  # 线程池配置
+  task:
+    execution:
+      pool:
+        core-size: 10
+        max-size: 50
+        queue-capacity: 1000
+      thread-name-prefix: milvus-task-
+
+# 熔断降级配置（集成Sentinel）
+feign:
+  sentinel:
+    enabled: true
+
+# 自定义指标
+custom:
+  metrics:
+    enabled: true
+    search-latency-threshold-ms: 100
+    batch-size: 100

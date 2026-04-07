@@ -1,0 +1,46 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/config-repo/{application}
+        # 支持多种后端：git, svn, native, vault
+        default-application-name: ai-knowledge-base
+        # 配置加密支持
+        encrypt:
+          enabled: true
+  
+  # 多环境配置文件模板位置
+  config:
+    import: optional:configserver:http://localhost:8888
+
+# Eureka客户端配置
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,configprops,env,refresh
+  endpoint:
+    health:
+      show-details: always
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.config.server: INFO
+    com.example.configserver: DEBUG

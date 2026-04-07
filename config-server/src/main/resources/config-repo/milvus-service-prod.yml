@@ -1,0 +1,79 @@
+# Milvus服务生产环境配置
+server:
+  port: 8086
+
+spring:
+  application:
+    name: milvus-service
+  
+  cloud:
+    config:
+      enabled: false
+
+# Milvus配置（生产环境使用集群）
+milvus:
+  host: milvus-proxy
+  port: 19530
+  database: production
+  collection:
+    name: knowledge_base_prod
+    vector-dimension: 1536
+    index-type: HNSW
+    metric-type: COSINE
+    index-params: '{"M":24,"efConstruction":300}'
+    search-params: '{"ef":128}'
+    create-if-not-exist: false  # 生产环境手动管理集合
+
+# 监控配置（生产环境详细监控）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /internal/actuator
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 30s
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+    probes:
+      enabled: true
+
+# 日志配置（生产环境JSON格式）
+logging:
+  level:
+    com.example.milvus: WARN
+    io.milvus: ERROR
+  pattern:
+    console: '{"timestamp":"%d{yyyy-MM-dd HH:mm:ss.SSS}","level":"%level","thread":"%thread","logger":"%logger","message":"%msg","exception":"%ex"}'
+  file:
+    name: /var/log/milvus-service/application.log
+
+# 性能调优（生产环境优化）
+spring:
+  mvc:
+    async:
+      request-timeout: 10s
+  
+  task:
+    execution:
+      pool:
+        core-size: 20
+        max-size: 100
+        queue-capacity: 2000
+      thread-name-prefix: milvus-prod-
+
+# 熔断降级配置
+feign:
+  sentinel:
+    enabled: true
+
+# 安全配置（生产环境启用安全）
+security:
+  basic:
+    enabled: true

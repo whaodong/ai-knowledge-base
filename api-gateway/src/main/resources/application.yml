@@ -1,0 +1,153 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  
+  cloud:
+    # 网关配置
+    gateway:
+      # 默认过滤器配置
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
+      
+      # 路由配置
+      routes:
+        # 文档服务路由
+        - id: document-service
+          uri: lb://document-service
+          predicates:
+            - Path=/document-service/**
+          filters:
+            - StripPrefix=1
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+          metadata:
+            response-timeout: 10000
+            connect-timeout: 5000
+        
+        # 向量化服务路由
+        - id: embedding-service
+          uri: lb://embedding-service
+          predicates:
+            - Path=/embedding-service/**
+          filters:
+            - StripPrefix=1
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+        
+        # RAG服务路由
+        - id: rag-service
+          uri: lb://rag-service
+          predicates:
+            - Path=/rag-service/**
+          filters:
+            - StripPrefix=1
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+        
+        # 配置中心路由（直接访问）
+        - id: config-server
+          uri: lb://config-server
+          predicates:
+            - Path=/config/**
+          filters:
+            - StripPrefix=1
+        
+        # 服务注册中心路由
+        - id: eureka-server
+          uri: http://localhost:8761
+          predicates:
+            - Path=/eureka/**
+        
+        # API文档路由（聚合所有服务的Swagger）
+        - id: api-docs
+          uri: lb://document-service
+          predicates:
+            - Path=/api-docs/**
+          filters:
+            - RewritePath=/api-docs/(?<segment>.*), /$\{segment}/v3/api-docs
+        
+        # Swagger UI路由
+        - id: swagger-ui
+          uri: http://localhost:8080
+          predicates:
+            - Path=/swagger-ui.html
+          filters:
+            - SetPath=/swagger-ui.html
+      
+      # 全局配置
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 10000
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+    
+    # 配置中心客户端
+    config:
+      enabled: true
+      uri: http://localhost:8888
+      name: api-gateway
+      profile: dev
+      label: main
+      fail-fast: true
+
+# 服务注册与发现
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway,routes
+      base-path: /actuator
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoint:
+    gateway:
+      enabled: true
+    routes:
+      enabled: true
+    health:
+      show-details: always
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.example.apigateway: DEBUG
+    reactor.netty: INFO

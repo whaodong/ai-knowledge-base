@@ -1,0 +1,105 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: embedding-service
+  
+  # 配置中心客户端配置
+  cloud:
+    config:
+      enabled: true
+      uri: http://localhost:8888
+      name: embedding-service
+      profile: dev
+      label: main
+      fail-fast: true
+  
+  # Redis配置
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 5
+  
+  # Spring AI OpenAI配置
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:your-api-key-here}
+      chat:
+        model: gpt-4
+        options:
+          temperature: 0.7
+          max-tokens: 2000
+      embedding:
+        model: text-embedding-3-small
+        options:
+          dimensions: 1536
+
+eureka:
+  client:
+    # 启用Eureka客户端
+    enabled: true
+    # 服务注册地址
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    # 注册刷新间隔
+    registry-fetch-interval-seconds: 30
+    # 初始注册表信息获取
+    should-fetch-registry: true
+    # 注册到Eureka
+    register-with-eureka: true
+    
+  instance:
+    # 实例配置
+    hostname: localhost
+    # 使用IP地址注册
+    prefer-ip-address: true
+    # 实例ID格式
+    instance-id: ${spring.cloud.client.hostname}:${spring.application.name}:${server.port}
+    # 续约配置
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+    # 状态页和健康检查URL
+    status-page-url-path: /actuator/info
+    health-check-url-path: /actuator/health
+
+# Ribbon负载均衡配置
+ribbon:
+  # 连接超时时间（毫秒）
+  ConnectTimeout: 3000
+  # 读取超时时间（毫秒）
+  ReadTimeout: 10000
+  # 对所有操作都进行重试（企业级建议为false）
+  OkToRetryOnAllOperations: false
+  # 同一个实例最大重试次数
+  MaxAutoRetries: 1
+  # 切换实例的最大重试次数
+  MaxAutoRetriesNextServer: 2
+  # 开启饥饿加载，避免第一次调用超时
+  eager-load:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    com.example.aiknowledgebase: DEBUG
+    org.springframework.ai: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

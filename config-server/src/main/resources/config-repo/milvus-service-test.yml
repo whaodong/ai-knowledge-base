@@ -1,0 +1,42 @@
+# Milvus服务测试环境配置
+server:
+  port: 8086
+
+spring:
+  application:
+    name: milvus-service
+  
+  cloud:
+    config:
+      enabled: false
+
+# Milvus配置（测试环境使用独立实例）
+milvus:
+  host: milvus-test
+  port: 19530
+  database: test
+  collection:
+    name: knowledge_base_test
+    vector-dimension: 1536
+    index-type: IVF_FLAT
+    metric-type: COSINE
+    index-params: '{"nlist":128}'
+    search-params: '{"nprobe":16}'
+    create-if-not-exist: true
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# 日志配置
+logging:
+  level:
+    com.example.milvus: INFO
+    io.milvus: WARN

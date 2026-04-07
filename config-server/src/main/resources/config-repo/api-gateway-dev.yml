@@ -1,0 +1,120 @@
+# API网关服务 - 开发环境配置
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  
+  cloud:
+    gateway:
+      # 全局默认过滤器
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
+      
+      # 路由配置（可从配置中心动态更新）
+      routes:
+        - id: document-service
+          uri: lb://document-service
+          predicates:
+            - Path=/document-service/**
+          filters:
+            - StripPrefix=1
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+        
+        - id: embedding-service
+          uri: lb://embedding-service
+          predicates:
+            - Path=/embedding-service/**
+          filters:
+            - StripPrefix=1
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+        
+        - id: rag-service
+          uri: lb://rag-service
+          predicates:
+            - Path=/rag-service/**
+          filters:
+            - StripPrefix=1
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+      
+      # HTTP客户端配置
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 10000
+      
+      # 服务发现配置
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+    
+    # 配置中心客户端
+    config:
+      enabled: true
+      uri: http://localhost:8888
+
+# 服务注册与发现
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway,routes
+      base-path: /actuator
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  endpoint:
+    gateway:
+      enabled: true
+    routes:
+      enabled: true
+    health:
+      show-details: always
+
+# JWT配置
+jwt:
+  secret: your-secret-key-should-be-at-least-32-characters-long
+  expiration: 86400000  # 24小时
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.example.apigateway: DEBUG
+    reactor.netty: INFO

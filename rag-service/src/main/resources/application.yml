@@ -1,0 +1,149 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: rag-service
+  
+  # 配置中心客户端配置
+  cloud:
+    config:
+      enabled: true
+      uri: http://localhost:8888
+      name: rag-service
+      profile: dev
+      label: main
+      fail-fast: true
+  
+  # Milvus向量数据库配置
+  ai:
+    milvus:
+      host: localhost
+      port: 19530
+      database: default
+      collection: knowledge_vectors
+      embedding-dimension: 1536
+      metric-type: COSINE
+      # 连接池配置
+      connection:
+        pool:
+          max-connections: 20
+          connect-timeout: 10s
+          keep-alive-time: 30s
+  
+  # Redis缓存配置
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 5
+        max-wait: 1000ms
+    # Redis Stack支持JSON模块
+    stack:
+      enabled: true
+  
+  # LangChain4j配置
+  langchain4j:
+    open-ai:
+      api-key: ${OPENAI_API_KEY:your-api-key-here}
+      model-name: gpt-4
+      temperature: 0.7
+      max-tokens: 2000
+
+  zipkin:
+    base-url: http://localhost:9411
+  sleuth:
+    sampler:
+      probability: 1.0
+
+eureka:
+  client:
+    # 启用Eureka客户端
+    enabled: true
+    # 服务注册地址
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    # 注册刷新间隔
+    registry-fetch-interval-seconds: 30
+    # 初始注册表信息获取
+    should-fetch-registry: true
+    # 注册到Eureka
+    register-with-eureka: true
+    
+  instance:
+    # 实例配置
+    hostname: localhost
+    # 使用IP地址注册
+    prefer-ip-address: true
+    # 实例ID格式
+    instance-id: ${spring.cloud.client.hostname}:${spring.application.name}:${server.port}
+    # 续约配置
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+    # 状态页和健康检查URL
+    status-page-url-path: /actuator/info
+    health-check-url-path: /actuator/health
+
+# Ribbon负载均衡配置
+ribbon:
+  # 连接超时时间（毫秒）
+  ConnectTimeout: 3000
+  # 读取超时时间（毫秒）
+  ReadTimeout: 10000
+  # 对所有操作都进行重试（企业级建议为false）
+  OkToRetriesOnAllOperations: false
+  # 同一个实例最大重试次数
+  MaxAutoRetries: 1
+  # 切换实例的最大重试次数
+  MaxAutoRetriesNextServer: 2
+  # 开启饥饿加载，避免第一次调用超时
+  eager-load:
+    enabled: true
+    clients: embedding-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      ragRetrieval:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 5s
+        failure-rate-threshold: 50
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 2s
+  ratelimiter:
+    instances:
+      ragRetrieval:
+        limit-for-period: 10
+        limit-refresh-period: 1s
+        timeout-duration: 0
+        register-health-indicator: true
+
+logging:
+  level:
+    com.example.aiknowledgebase: DEBUG
+    org.springframework.ai: INFO
+    io.milvus: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

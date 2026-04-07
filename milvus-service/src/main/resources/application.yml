@@ -1,0 +1,53 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: milvus-service
+  
+  # 配置中心配置
+  cloud:
+    config:
+      uri: http://localhost:8888
+      fail-fast: true
+      retry:
+        max-attempts: 6
+        max-interval: 2000
+      name: milvus-service
+      profile: dev
+
+# Milvus配置
+milvus:
+  host: ${MILVUS_HOST:localhost}
+  port: ${MILVUS_PORT:19530}
+  database: ${MILVUS_DATABASE:default}
+  collection:
+    name: ${MILVUS_COLLECTION_NAME:knowledge_base}
+    vector-dimension: ${MILVUS_VECTOR_DIMENSION:1536}
+    index-type: ${MILVUS_INDEX_TYPE:HNSW}
+    metric-type: ${MILVUS_METRIC_TYPE:COSINE}
+    index-params: ${MILVUS_INDEX_PARAMS:{"M":16,"efConstruction":200}}
+    search-params: ${MILVUS_SEARCH_PARAMS:{"ef":64}}
+    create-if-not-exist: ${MILVUS_CREATE_IF_NOT_EXIST:true}
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  health:
+    db:
+      enabled: false  # 暂时禁用数据库健康检查
+
+# 日志配置
+logging:
+  level:
+    com.example.milvus: DEBUG
+    io.milvus: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
