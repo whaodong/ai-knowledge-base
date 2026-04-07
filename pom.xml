@@ -380,6 +380,13 @@
                 <artifactId>jodd-util</artifactId>
                 <version>6.2.2</version>
             </dependency>
+            
+            <!-- Protobuf统一版本 -->
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>3.24.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
