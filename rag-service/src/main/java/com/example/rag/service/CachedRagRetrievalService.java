@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
  */
 @Slf4j
 @Service
-@ConditionalOnBean({RagCacheService.class, HotQueryDetector.class})
+@ConditionalOnBean({RagCacheService.class, HotQueryDetector.class, CacheMonitorService.class})
 public class CachedRagRetrievalService {
 
     private final RagRetrievalService ragRetrievalService;
