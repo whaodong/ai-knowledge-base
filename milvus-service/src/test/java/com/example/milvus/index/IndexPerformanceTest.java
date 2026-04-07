@@ -1,6 +1,7 @@
 package com.example.milvus.index;
 
 import io.milvus.client.MilvusClient;
+import io.milvus.grpc.DataType;
 import io.milvus.grpc.MutationResult;
 import io.milvus.grpc.SearchResults;
 import io.milvus.param.IndexType;
