@@ -2,6 +2,7 @@ package com.example.milvus.service.batch;
 
 import io.milvus.client.MilvusClient;
 import io.milvus.grpc.MutationResult;
+import io.milvus.param.R;
 import io.milvus.param.dml.InsertParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -194,7 +195,8 @@ public class BatchInsertService {
             
             List<InsertParam.Field> batchFields = new ArrayList<>();
             for (InsertParam.Field field : fields) {
-                List<Object> batchValues = field.getValues().subList(start, end);
+                List<?> values = field.getValues();
+                List<Object> batchValues = new ArrayList<>(values.subList(start, end));
                 batchFields.add(new InsertParam.Field(field.getName(), batchValues));
             }
             
@@ -327,12 +329,14 @@ public class BatchInsertService {
                         .withFields(fields)
                         .build();
                 
-                MutationResult result = milvusClient.insert(insertParam);
+                R<MutationResult> response = milvusClient.insert(insertParam);
                 
-                if (result.getInsertCount() > 0) {
+                // Milvus SDK 2.x: 检查响应状态
+                if (response.getStatus() == R.Status.Success.getCode()) {
+                    log.debug("批次插入成功");
                     return;
                 } else {
-                    throw new RuntimeException("插入计数为0");
+                    throw new RuntimeException("插入失败: " + response.getMessage());
                 }
                 
             } catch (Exception e) {

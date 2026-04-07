@@ -91,10 +91,6 @@ public class MilvusVectorStoreConfig {
                 .withPort(port)
                 .withDatabaseName(database)
                 .withAuthorization(username, password)
-                // 连接池配置
-                .withGrpcChannelPoolSize(channelPoolSize)
-                .withMaxIdlePerChannel(maxIdlePerChannel)
-                .withMaxTotal(maxTotal)
                 // 超时配置
                 .withConnectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
                 .withKeepAliveTime(keepAliveTime, TimeUnit.SECONDS)

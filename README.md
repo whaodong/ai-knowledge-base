@@ -105,10 +105,61 @@ java -jar api-gateway/target/api-gateway-1.0.0-SNAPSHOT.jar
 
 ## API 文档
 
+### 访问在线文档
+
 启动服务后访问：
 - API Gateway: http://localhost:8080
 - Eureka Dashboard: http://localhost:8761
 - Swagger UI (各服务): http://localhost:{port}/swagger-ui.html
+
+### RESTful API 设计
+
+本系统实现了完整的RESTful API，遵循以下设计原则：
+
+#### 统一响应格式
+
+所有API返回统一的 `Result<T>` 格式：
+
+```json
+{
+  "code": 200,
+  "message": "操作成功",
+  "data": { ... },
+  "timestamp": "2024-04-07T17:00:00",
+  "traceId": "req-12345"
+}
+```
+
+#### 主要API端点
+
+**文档管理API** (Document Service - 8081)
+- `POST /api/v1/documents` - 上传文档
+- `POST /api/v1/documents/batch` - 批量上传
+- `GET /api/v1/documents` - 文档列表（支持分页、筛选）
+- `GET /api/v1/documents/{id}` - 文档详情
+- `DELETE /api/v1/documents/{id}` - 删除文档
+
+**向量化API** (Embedding Service - 8082)
+- `POST /api/v1/embeddings` - 文本向量化
+- `POST /api/v1/embeddings/batch` - 批量向量化
+- `GET /api/v1/embeddings/status/{taskId}` - 查询任务状态
+
+**RAG查询API** (RAG Service - 8083)
+- `POST /api/v1/rag/query` - RAG查询（混合检索+重排序）
+- `POST /api/v1/rag/chat` - 流式对话（SSE）
+- `GET /api/v1/rag/history/{sessionId}` - 会话历史
+
+#### 详细API文档
+
+完整的API设计文档请参考：[docs/api-design.md](docs/api-design.md)
+
+包含：
+- 统一响应格式说明
+- 分页参数规范
+- 异常处理机制
+- 错误码定义
+- 各服务API详细说明
+- 请求/响应示例
 
 ## 核心功能
 
