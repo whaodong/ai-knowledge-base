@@ -1,0 +1,22 @@
+# JWT配置示例
+jwt:
+  # JWT密钥（生产环境必须修改为复杂的密钥，至少256位）
+  secret: ai-knowledge-base-default-secret-key-must-be-at-least-256-bits-long
+  # Token过期时间（毫秒），默认24小时
+  expiration: 86400000
+  # Token前缀
+  token-prefix: "Bearer "
+  # Token请求头名称
+  header: Authorization
+  # 刷新Token过期时间（毫秒），默认7天
+  refresh-expiration: 604800000
+  # Token签发者
+  issuer: ai-knowledge-base
+
+# Spring Security配置
+spring:
+  security:
+    # 开启方法级安全控制
+    method:
+      security:
+        enabled: true

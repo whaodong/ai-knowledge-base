@@ -1,10 +1,19 @@
 package com.example.embedding.controller;
 
+import com.example.common.dto.Result;
+import com.example.embedding.dto.*;
+import com.example.embedding.service.EmbeddingService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,22 +26,100 @@ import java.util.Map;
  * @author AI Knowledge Base Team
  * @since 1.0.0
  */
+@Slf4j
 @RestController
-@RequestMapping("/api/embedding")
+@RequestMapping("/api/v1/embeddings")
+@Tag(name = "向量化API", description = "文本向量化、批量向量化、任务状态查询")
 public class EmbeddingController {
+
+    @Autowired
+    private EmbeddingService embeddingService;
 
     @Value("${spring.application.name}")
     private String appName;
     
     @Value("${server.port}")
     private String port;
-    
+
+    /**
+     * 文本向量化
+     */
+    @PostMapping
+    @Operation(
+        summary = "文本向量化",
+        description = "将单个文本转换为向量表示"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "向量化成功"),
+        @ApiResponse(responseCode = "400", description = "参数错误"),
+        @ApiResponse(responseCode = "500", description = "服务器错误")
+    })
+    public ResponseEntity<Result<EmbeddingResponse>> embedText(
+            @Valid @RequestBody EmbeddingRequest request) {
+        
+        log.info("收到文本向量化请求: {}", request.getText().substring(0, Math.min(50, request.getText().length())));
+        
+        EmbeddingResponse response = embeddingService.embedText(request);
+        
+        if (response.getStatus() == EmbeddingResponse.TaskStatus.COMPLETED) {
+            return ResponseEntity.ok(Result.success("向量化成功", response));
+        } else {
+            return ResponseEntity.ok(Result.fail(500, "向量化失败"));
+        }
+    }
+
+    /**
+     * 批量文本向量化
+     */
+    @PostMapping("/batch")
+    @Operation(
+        summary = "批量文本向量化",
+        description = "批量将多个文本转换为向量表示"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "批量向量化完成"),
+        @ApiResponse(responseCode = "400", description = "参数错误"),
+        @ApiResponse(responseCode = "500", description = "服务器错误")
+    })
+    public ResponseEntity<Result<EmbeddingBatchResponse>> batchEmbedTexts(
+            @Valid @RequestBody EmbeddingBatchRequest request) {
+        
+        log.info("收到批量文本向量化请求，数量: {}", request.getTexts().size());
+        
+        EmbeddingBatchResponse response = embeddingService.batchEmbedTexts(request);
+        
+        return ResponseEntity.ok(Result.success("批量向量化完成", response));
+    }
+
+    /**
+     * 查询向量化任务状态
+     */
+    @GetMapping("/status/{taskId}")
+    @Operation(
+        summary = "查询任务状态",
+        description = "根据任务ID查询向量化任务的状态"
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "查询成功"),
+        @ApiResponse(responseCode = "404", description = "任务不存在"),
+        @ApiResponse(responseCode = "500", description = "服务器错误")
+    })
+    public ResponseEntity<Result<EmbeddingResponse>> getTaskStatus(
+            @Parameter(description = "任务ID", required = true)
+            @PathVariable String taskId) {
+        
+        log.info("收到任务状态查询请求: {}", taskId);
+        
+        EmbeddingResponse response = embeddingService.getTaskStatus(taskId);
+        
+        return ResponseEntity.ok(Result.success(response));
+    }
+
     /**
      * 健康检查接口
-     * 
-     * @return 服务状态信息
      */
     @GetMapping("/health")
+    @Operation(summary = "健康检查", description = "服务健康状态检查")
     public Map<String, Object> health() {
         Map<String, Object> result = new HashMap<>();
         result.put("status", "UP");
@@ -43,40 +130,26 @@ public class EmbeddingController {
     }
     
     /**
-     * 测试向量生成接口（简化版）
-     * 
-     * <p>实际企业级实现会调用OpenAI Embedding API，这里返回模拟数据。</p>
-     * 
-     * @param text 待向量化的文本
-     * @return 向量生成结果
-     */
-    @GetMapping("/generate")
-    public Map<String, Object> generateEmbedding(@RequestParam String text) {
-        Map<String, Object> result = new HashMap<>();
-        result.put("text", text);
-        result.put("embedding", "模拟向量数据（实际为1536维浮点数数组）");
-        result.put("dimension", 1536);
-        result.put("model", "text-embedding-3-small");
-        result.put("service", appName);
-        result.put("timestamp", System.currentTimeMillis());
-        return result;
-    }
-    
-    /**
-     * 服务间调用测试接口
-     * 
-     * <p>用于验证Feign客户端调用，返回服务信息。</p>
-     * 
-     * @return 服务信息
+     * 服务信息接口
      */
     @GetMapping("/info")
+    @Operation(summary = "服务信息", description = "获取服务详细信息")
     public Map<String, Object> getServiceInfo() {
         Map<String, Object> info = new HashMap<>();
         info.put("serviceName", appName);
         info.put("instanceId", appName + ":" + port);
         info.put("status", "ACTIVE");
-        info.put("endpoints", new String[] {"/api/embedding/health", "/api/embedding/generate", "/api/embedding/info"});
-        info.put("description", "向量生成服务，提供文档向量化能力");
+        info.put("description", "向量生成服务，提供文本向量化能力");
+        info.put("endpoints", new String[] {
+            "POST /api/v1/embeddings - 文本向量化",
+            "POST /api/v1/embeddings/batch - 批量向量化",
+            "GET /api/v1/embeddings/status/{taskId} - 查询任务状态"
+        });
+        info.put("supportedModels", new String[] {
+            "text-embedding-3-small",
+            "text-embedding-3-large",
+            "text-embedding-ada-002"
+        });
         info.put("timestamp", System.currentTimeMillis());
         return info;
     }

@@ -1,0 +1,148 @@
+# RAG服务性能优化配置
+# Week 3 Day 18-19 工程化问题解决
+
+# ============= Token计数配置 =============
+rag:
+  context:
+    # 上下文窗口最大Token数（默认4096，适用于GPT-3.5-turbo）
+    max-tokens: 4096
+    # 系统提示词预留Token数
+    system-prompt-reserved-tokens: 500
+    # 响应预留Token数
+    response-reserved-tokens: 1000
+    # 保留最近对话轮数
+    recent-turns: 3
+    # 相似度阈值（用于选择保留的检索结果）
+    similarity-threshold: 0.7
+
+# ============= 置信度过滤配置 =============
+  confidence:
+    # 相似度阈值（默认0.7）
+    similarity-threshold: 0.7
+    # 最小结果数
+    min-results: 1
+    # 最大结果数
+    max-results: 10
+    # 是否启用置信度评分
+    enable-scoring: true
+
+# ============= 异步检索配置 =============
+  async:
+    # 核心线程数（建议设置为CPU核心数）
+    core-pool-size: ${java.lang.Runtime.getRuntime().availableProcessors()}
+    # 最大线程数
+    max-pool-size: 20
+    # 队列容量
+    queue-capacity: 100
+    # 超时时间（毫秒）
+    timeout: 5000
+
+# ============= Milvus连接池配置 =============
+milvus:
+  # 基础连接配置
+  host: localhost
+  port: 19530
+  database: default
+  username: root
+  password: milvus
+  
+  # 连接池配置
+  pool:
+    # gRPC通道池大小（提高并发性能）
+    channel-pool-size: 10
+    # 每个通道最大空闲连接数
+    max-idle-per-channel: 20
+    # 最大总连接数
+    max-total: 100
+  
+  # 超时配置
+  timeout:
+    # 连接超时（毫秒）
+    connect: 10000
+    # 保活时间（秒）
+    keep-alive: 55
+    # 保活超时（秒）
+    keep-alive-timeout: 20
+    # 空闲超时（小时）
+    idle: 24
+  
+  # 批量插入配置
+  batch:
+    # 批量插入大小
+    insert-batch-size: 1000
+    # 最大重试次数
+    max-retries: 3
+    # 并行线程数
+    parallel-threads: 4
+
+# ============= Spring AI配置 =============
+spring:
+  ai:
+    vectorstore:
+      milvus:
+        client:
+          host: ${milvus.host}
+          port: ${milvus.port}
+        database-name: ${milvus.database}
+        collection-name: knowledge_base
+        embedding-dimension: 1536
+        index-type: IVF_FLAT
+        metric-type: COSINE
+
+# ============= 缓存配置 =============
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000 # 10分钟
+      cache-null-values: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 3000
+
+# ============= 熔断器配置 =============
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        permitted-number-of-calls-in-half-open-state: 3
+        slow-call-duration-threshold: 2000
+        slow-call-rate-threshold: 50
+    instances:
+      ragRetrieval:
+        base-config: default
+      milvusOperation:
+        base-config: default
+
+# ============= 监控配置 =============
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: rag-service
+    export:
+      prometheus:
+        enabled: true
+
+# ============= 日志配置 =============
+logging:
+  level:
+    com.example.rag: DEBUG
+    com.example.milvus: DEBUG
+    com.example.common: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"

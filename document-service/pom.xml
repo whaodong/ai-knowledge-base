@@ -17,6 +17,13 @@
     <description>文档管理服务，处理文档上传、解析、存储</description>
 
     <dependencies>
+        <!-- Common Module -->
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        
         <!-- Spring Boot基础 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -77,6 +84,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
         
         <!-- 工具类 -->

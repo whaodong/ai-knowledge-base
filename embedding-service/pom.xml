@@ -17,6 +17,13 @@
     <description>向量生成服务，集成OpenAI Embedding API和Redis缓存</description>
 
     <dependencies>
+        <!-- Common Module -->
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        
         <!-- Spring Boot基础 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

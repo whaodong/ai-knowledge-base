@@ -1,0 +1,92 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'ai-knowledge-base'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  # Prometheus自监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Spring Boot Actuator端点
+  - job_name: 'api-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['api-gateway:8080']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'api-gateway'
+
+  - job_name: 'config-server'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['config-server:8888']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'config-server'
+
+  - job_name: 'eureka-server'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['eureka-server:8761']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'eureka-server'
+
+  - job_name: 'document-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['document-service:8081']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'document-service'
+
+  - job_name: 'embedding-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['embedding-service:8082']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'embedding-service'
+
+  - job_name: 'rag-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['rag-service:8083']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'rag-service'
+
+  - job_name: 'milvus-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['milvus-service:8086']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'milvus-service'
+
+  # Milvus监控（如果暴露了metrics端点）
+  - job_name: 'milvus-standalone'
+    static_configs:
+      - targets: ['milvus:9091']
+
+  # Redis监控（需要redis_exporter）
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']

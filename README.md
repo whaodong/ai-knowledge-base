@@ -1,5 +1,10 @@
 # AI Knowledge Base
 
+[![CI/CD Pipeline](https://github.com/whaodong/ai-knowledge-base/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/whaodong/ai-knowledge-base/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Java Version](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.0-brightgreen)](https://spring.io/projects/spring-boot)
+
 基于 Spring Boot 3.3 + Spring AI 1.0.0-M3 + Milvus 的智能知识库系统，支持 RAG（检索增强生成）架构。
 
 ## 技术栈

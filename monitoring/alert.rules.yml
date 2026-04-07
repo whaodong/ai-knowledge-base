@@ -1,0 +1,72 @@
+groups:
+  - name: ai-knowledge-base-alerts
+    rules:
+      # 服务宕机告警
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.instance }} has been down for more than 1 minute."
+
+      # 高延迟告警
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(rag_query_latency_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High RAG query latency"
+          description: "95th percentile latency is above 1s for 5 minutes."
+
+      # 内存使用告警
+      - alert: HighMemoryUsage
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High JVM heap usage"
+          description: "Heap usage is above 85% for 5 minutes."
+
+      # 错误率告警
+      - alert: HighErrorRate
+        expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate"
+          description: "Error rate is above 5% for 5 minutes."
+
+      # Milvus不可用告警
+      - alert: MilvusUnavailable
+        expr: health_status{name="milvus"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Milvus is unavailable"
+          description: "Milvus has been unavailable for more than 2 minutes."
+
+      # 缓存命中率低告警
+      - alert: LowCacheHitRate
+        expr: rate(rag_cache_hits_total[5m]) / (rate(rag_cache_hits_total[5m]) + rate(rag_cache_misses_total[5m])) < 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is below 50% for 10 minutes."
+
+      # 高CPU使用率告警
+      - alert: HighCPUUsage
+        expr: system_cpu_usage > 0.85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 85% for 5 minutes."
