@@ -111,6 +111,15 @@
                 <version>3.42.0</version>
             </dependency>
             
+            <!-- QueryDSL BOM，从Maven Central获取 -->
+            <dependency>
+                <groupId>com.querydsl</groupId>
+                <artifactId>querydsl-bom</artifactId>
+                <version>5.1.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            
             <!-- Guava统一版本，解决依赖收敛问题 -->
             <dependency>
                 <groupId>com.google.guava</groupId>
@@ -293,6 +302,18 @@
     </dependencyManagement>
 
     <repositories>
+        <!-- 阿里云镜像优先 -->
+        <repository>
+            <id>aliyun</id>
+            <name>Aliyun Maven Mirror</name>
+            <url>https://maven.aliyun.com/repository/public</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>spring-milestones</id>
             <name>Spring Milestones</name>
