@@ -5,8 +5,6 @@ import com.example.embedding.model.EmbeddingModelType;
 import com.example.embedding.model.EmbeddingResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.embedding.EmbeddingResponse;
-import org.springframework.ai.embedding.Embedding;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -63,13 +61,10 @@ public class OpenAIEmbeddingProvider implements EmbeddingProvider {
         try {
             log.debug("OpenAI embedding with model: {}", modelType.getModelName());
             
-            // 使用embedForResponse方法
-            EmbeddingResponse response = embeddingModel.embedForResponse(List.of(text));
+            // Spring AI 1.0.0-M3: embed(String) 直接返回 float[]
+            float[] values = embeddingModel.embed(text);
             
-            if (response != null && !response.getResults().isEmpty()) {
-                Embedding embeddingResult = response.getResults().get(0);
-                float[] values = embeddingResult.getOutput();
-                
+            if (values != null && values.length > 0) {
                 List<Float> embedding = new ArrayList<>();
                 for (float value : values) {
                     embedding.add(value);
@@ -97,15 +92,12 @@ public class OpenAIEmbeddingProvider implements EmbeddingProvider {
         try {
             log.debug("OpenAI batch embedding with model: {}, batch size: {}", modelType.getModelName(), texts.size());
             
-            // 使用embedForResponse批量处理
-            EmbeddingResponse response = embeddingModel.embedForResponse(texts);
-            
-            if (response != null) {
-                List<Embedding> embeddings = response.getResults();
-                
-                for (int i = 0; i < texts.size(); i++) {
-                    if (i < embeddings.size()) {
-                        float[] values = embeddings.get(i).getOutput();
+            // 逐个处理（批量API可能有问题，使用逐个处理更稳定）
+            for (String text : texts) {
+                try {
+                    float[] values = embeddingModel.embed(text);
+                    
+                    if (values != null && values.length > 0) {
                         List<Float> embedding = new ArrayList<>();
                         for (float value : values) {
                             embedding.add(value);
@@ -114,8 +106,11 @@ public class OpenAIEmbeddingProvider implements EmbeddingProvider {
                         results.add(EmbeddingResult.success(embedding, modelType, 
                             System.currentTimeMillis() - startTime, false));
                     } else {
-                        results.add(EmbeddingResult.failure("Missing embedding at index " + i));
+                        results.add(EmbeddingResult.failure("Empty embedding response"));
                     }
+                } catch (Exception e) {
+                    log.error("Embedding failed for text: {}", e.getMessage());
+                    results.add(EmbeddingResult.failure("Embedding failed: " + e.getMessage()));
                 }
             }
             
