@@ -40,44 +40,37 @@
         <dependency>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-spring-boot3</artifactId>
-            <version>2.2.0</version>
         </dependency>
         <dependency>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-circuitbreaker</artifactId>
-            <version>2.2.0</version>
         </dependency>
         <dependency>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-ratelimiter</artifactId>
-            <version>2.2.0</version>
         </dependency>
         <!-- Resilience4j Micrometer监控 -->
         <dependency>
             <groupId>io.github.resilience4j</groupId>
             <artifactId>resilience4j-micrometer</artifactId>
-            <version>2.2.0</version>
         </dependency>
         
         <!-- OpenAPI文档 -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.5.0</version>
         </dependency>
         
         <!-- Spring AI Core -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-core</artifactId>
-            <version>${spring-ai.version}</version>
         </dependency>
         
         <!-- Spring AI Vector Store (使用milvus-store模块) -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-milvus-store</artifactId>
-            <version>${spring-ai.version}</version>
         </dependency>
         
         <!-- LangChain4j RAG -->
@@ -101,7 +94,6 @@
         <dependency>
             <groupId>io.milvus</groupId>
             <artifactId>milvus-sdk-java</artifactId>
-            <version>${milvus-sdk-java.version}</version>
         </dependency>
         
         <!-- 服务发现 -->

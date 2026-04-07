@@ -28,8 +28,8 @@
         <spring-ai.version>1.0.0-M3</spring-ai.version>
         <!-- LangChain4j版本 -->
         <langchain4j.version>0.30.0</langchain4j.version>
-        <!-- Milvus Java SDK版本 -->
-        <milvus-sdk-java.version>2.2.9</milvus-sdk-java.version>
+        <!-- Milvus Java SDK版本 - 与spring-ai-milvus-store传递依赖一致 -->
+        <milvus-sdk-java.version>2.3.4</milvus-sdk-java.version>
         <!-- Spring Cloud版本 -->
         <spring-cloud.version>2023.0.1</spring-cloud.version>
         <!-- Redis Stack版本 -->
@@ -311,6 +311,74 @@
                 <groupId>com.google.errorprone</groupId>
                 <artifactId>error_prone_annotations</artifactId>
                 <version>2.23.0</version>
+            </dependency>
+            
+            <!-- Spring AI Core - 强制统一版本，解决M3里程碑内部不一致 -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-core</artifactId>
+                <version>${spring-ai.version}</version>
+            </dependency>
+            
+            <!-- Milvus SDK - 与spring-ai-milvus-store传递依赖一致 -->
+            <dependency>
+                <groupId>io.milvus</groupId>
+                <artifactId>milvus-sdk-java</artifactId>
+                <version>2.3.4</version>
+            </dependency>
+            
+            <!-- SpringDoc OpenAPI统一版本 -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>2.5.0</version>
+            </dependency>
+            
+            <!-- Resilience4j BOM统一版本 -->
+            <dependency>
+                <groupId>io.github.resilience4j</groupId>
+                <artifactId>resilience4j-bom</artifactId>
+                <version>2.2.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            
+            <!-- JSON Schema统一版本 -->
+            <dependency>
+                <groupId>com.github.victools</groupId>
+                <artifactId>jsonschema-module-jackson</artifactId>
+                <version>4.35.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.victools</groupId>
+                <artifactId>jsonschema-generator</artifactId>
+                <version>4.35.0</version>
+            </dependency>
+            
+            <!-- Scala统一版本（Gatling依赖） -->
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-library</artifactId>
+                <version>2.13.12</version>
+            </dependency>
+            <dependency>
+                <groupId>org.scala-lang</groupId>
+                <artifactId>scala-reflect</artifactId>
+                <version>2.13.12</version>
+            </dependency>
+            
+            <!-- Typesafe Config统一版本 -->
+            <dependency>
+                <groupId>com.typesafe</groupId>
+                <artifactId>config</artifactId>
+                <version>1.4.3</version>
+            </dependency>
+            
+            <!-- Jodd统一版本 -->
+            <dependency>
+                <groupId>org.jodd</groupId>
+                <artifactId>jodd-util</artifactId>
+                <version>6.2.2</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
