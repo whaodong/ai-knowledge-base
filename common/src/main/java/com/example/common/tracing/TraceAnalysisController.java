@@ -32,13 +32,7 @@ public class TraceAnalysisController {
     @GetMapping("/stats")
     @Operation(summary = "获取追踪统计信息", description = "获取所有Span的统计信息")
     public Result<List<TraceAnalysisService.SpanStats>> getStats() {
-        return Result.success(traceAnalysisService.getAllSpanStats());
-    }
-
-    @GetMapping("/stats/p99")
-    @Operation(summary = "获取P99延迟", description = "获取各Span的P99延迟统计")
-    public Result<Map<String, Long>> getP99Latencies() {
-        return Result.success(traceAnalysisService.getP99Latencies());
+        return Result.success(traceAnalysisService.getSpanStats());
     }
 
     @GetMapping("/slow-traces")
@@ -57,14 +51,14 @@ public class TraceAnalysisController {
 
     @GetMapping("/dependencies")
     @Operation(summary = "获取服务依赖关系", description = "获取服务间调用依赖关系")
-    public Result<Map<String, TraceAnalysisService.ServiceDependency>> getDependencies() {
+    public Result<List<TraceAnalysisService.ServiceDependency>> getDependencies() {
         return Result.success(traceAnalysisService.getServiceDependencies());
     }
 
     @GetMapping("/bottlenecks")
     @Operation(summary = "分析性能瓶颈", description = "分析系统性能瓶颈")
-    public Result<List<TraceAnalysisService.BottleneckAnalysis>> analyzeBottlenecks() {
-        return Result.success(traceAnalysisService.analyzeBottlenecks());
+    public Result<List<Map<String, Object>>> analyzeBottlenecks() {
+        return Result.success(traceAnalysisService.getPerformanceBottlenecks());
     }
 
     @GetMapping("/current-trace")
@@ -76,7 +70,7 @@ public class TraceAnalysisController {
         if (span != null) {
             traceInfo.put("traceId", span.context().traceId());
             traceInfo.put("spanId", span.context().spanId());
-            traceInfo.put("spanName", span.getName());
+            traceInfo.put("tags", span.getTags().toString());
         } else {
             traceInfo.put("message", "No active trace");
         }
@@ -84,11 +78,10 @@ public class TraceAnalysisController {
         return Result.success(traceInfo);
     }
 
-    @DeleteMapping("/stats")
-    @Operation(summary = "清空统计数据", description = "清空所有追踪统计数据")
-    public Result<String> clearStats() {
-        traceAnalysisService.clearStats();
-        return Result.success("统计数据已清空");
+    @GetMapping("/report")
+    @Operation(summary = "生成追踪报告", description = "生成完整的追踪分析报告")
+    public Result<Map<String, Object>> generateReport() {
+        return Result.success(traceAnalysisService.generateReport());
     }
 
     @GetMapping("/health")
@@ -96,11 +89,9 @@ public class TraceAnalysisController {
     public Result<Map<String, Object>> health() {
         Map<String, Object> health = new HashMap<>();
         health.put("status", "UP");
-        health.put("spanCount", traceAnalysisService.getAllSpanStats().size());
+        health.put("spanCount", traceAnalysisService.getSpanStats().size());
         health.put("slowTraceCount", traceAnalysisService.getSlowTraces(1000).size());
         health.put("errorTraceCount", traceAnalysisService.getErrorTraces(1000).size());
-        health.put("dependencyCount", traceAnalysisService.getServiceDependencies().size());
-        
         return Result.success(health);
     }
 }

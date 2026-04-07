@@ -122,16 +122,6 @@ public class TracingContext {
     }
 
     /**
-     * 设置当前Span为关键Span
-     */
-    public void setSpanKind(Span.Kind kind) {
-        Span span = currentSpan();
-        if (span != null) {
-            span.kind(kind);
-        }
-    }
-
-    /**
      * 设置远程服务名称
      */
     public void setRemoteServiceName(String serviceName) {

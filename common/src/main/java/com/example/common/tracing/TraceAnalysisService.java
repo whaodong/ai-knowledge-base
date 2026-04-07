@@ -48,10 +48,9 @@ public class TraceAnalysisService {
     /**
      * 记录Span完成
      */
-    public void recordSpanCompletion(Span span, Duration duration) {
+    public void recordSpanCompletion(Span span, Duration duration, String spanName) {
         if (span == null) return;
         
-        String spanName = span.getName();
         long durationMs = duration.toMillis();
         
         // 更新统计信息
@@ -60,25 +59,42 @@ public class TraceAnalysisService {
                 stats = new SpanStats();
                 stats.setSpanName(spanName);
             }
-            stats.recordCall(durationMs, span.getError() != null);
+            stats.recordCall(durationMs, false);
             return stats;
         });
         
         // 记录慢请求
         if (durationMs > SLOW_THRESHOLD_MS) {
-            recordSlowTrace(span, durationMs);
+            recordSlowTrace(span, spanName, durationMs);
         }
+    }
+
+    /**
+     * 记录错误Span
+     */
+    public void recordSpanError(Span span, String spanName, Duration duration, Throwable error) {
+        if (span == null) return;
+        
+        long durationMs = duration.toMillis();
+        
+        // 更新统计信息
+        spanStatsMap.compute(spanName, (key, stats) -> {
+            if (stats == null) {
+                stats = new SpanStats();
+                stats.setSpanName(spanName);
+            }
+            stats.recordCall(durationMs, true);
+            return stats;
+        });
         
         // 记录错误
-        if (span.getError() != null) {
-            recordErrorTrace(span, durationMs);
-        }
+        recordErrorTrace(span, spanName, durationMs, error);
     }
 
     /**
      * 记录服务调用关系
      */
-    public void recordServiceDependency(String fromService, String toService) {
+    public void recordServiceCall(String fromService, String toService) {
         String key = fromService + "->" + toService;
         dependencyMap.compute(key, (k, dep) -> {
             if (dep == null) {
@@ -91,192 +107,147 @@ public class TraceAnalysisService {
         });
     }
 
-    /**
-     * 记录慢请求
-     */
-    private void recordSlowTrace(Span span, long durationMs) {
+    private void recordSlowTrace(Span span, String spanName, long durationMs) {
         if (slowTraces.size() >= MAX_RECORDS) {
             slowTraces.remove(0);
         }
         
         SlowTraceRecord record = new SlowTraceRecord();
+        record.setSpanName(spanName);
         record.setTraceId(span.context().traceId());
         record.setSpanId(span.context().spanId());
-        record.setSpanName(span.getName());
         record.setDurationMs(durationMs);
         record.setTimestamp(Instant.now());
-        record.setTags(span.getAllTags());
+        record.setTags(new HashMap<>(span.getTags()));
         
         slowTraces.add(record);
-        log.warn("检测到慢请求: span={}, duration={}ms, traceId={}", 
-                span.getName(), durationMs, span.context().traceId());
     }
 
-    /**
-     * 记录错误追踪
-     */
-    private void recordErrorTrace(Span span, long durationMs) {
+    private void recordErrorTrace(Span span, String spanName, long durationMs, Throwable error) {
         if (errorTraces.size() >= MAX_RECORDS) {
             errorTraces.remove(0);
         }
         
         ErrorTraceRecord record = new ErrorTraceRecord();
+        record.setSpanName(spanName);
         record.setTraceId(span.context().traceId());
         record.setSpanId(span.context().spanId());
-        record.setSpanName(span.getName());
         record.setDurationMs(durationMs);
         record.setTimestamp(Instant.now());
-        record.setErrorType(span.getError().getClass().getSimpleName());
-        record.setErrorMessage(span.getError().getMessage());
-        record.setTags(span.getAllTags());
+        record.setTags(new HashMap<>(span.getTags()));
+        record.setErrorMessage(error != null ? error.getMessage() : "Unknown error");
         
         errorTraces.add(record);
-        log.error("检测到错误请求: span={}, error={}, traceId={}", 
-                span.getName(), record.getErrorType(), span.context().traceId());
     }
 
     /**
-     * 获取所有Span的统计信息
+     * 获取慢请求统计
      */
-    public List<SpanStats> getAllSpanStats() {
+    public List<SlowTraceRecord> getSlowTraces(int limit) {
+        return slowTraces.stream()
+            .limit(limit)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取错误追踪记录
+     */
+    public List<ErrorTraceRecord> getErrorTraces(int limit) {
+        return errorTraces.stream()
+            .limit(limit)
+            .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取Span统计信息
+     */
+    public List<SpanStats> getSpanStats() {
         return new ArrayList<>(spanStatsMap.values());
     }
 
     /**
-     * 获取P99延迟统计
+     * 获取服务依赖关系
      */
-    public Map<String, Long> getP99Latencies() {
-        return spanStatsMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> e.getValue().getP99Latency()
-                ));
+    public List<ServiceDependency> getServiceDependencies() {
+        return new ArrayList<>(dependencyMap.values());
     }
 
     /**
-     * 获取慢请求列表
+     * 获取性能瓶颈
      */
-    public List<SlowTraceRecord> getSlowTraces(int limit) {
-        return slowTraces.stream()
-                .sorted((a, b) -> Long.compare(b.getDurationMs(), a.getDurationMs()))
-                .limit(limit)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 获取错误追踪列表
-     */
-    public List<ErrorTraceRecord> getErrorTraces(int limit) {
-        return errorTraces.stream()
-                .limit(limit)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 获取服务依赖图
-     */
-    public Map<String, ServiceDependency> getServiceDependencies() {
-        return new HashMap<>(dependencyMap);
-    }
-
-    /**
-     * 获取性能瓶颈分析
-     */
-    public List<BottleneckAnalysis> analyzeBottlenecks() {
+    public List<Map<String, Object>> getPerformanceBottlenecks() {
         return spanStatsMap.values().stream()
-                .filter(stats -> stats.getP99Latency() > SLOW_THRESHOLD_MS)
-                .map(stats -> {
-                    BottleneckAnalysis analysis = new BottleneckAnalysis();
-                    analysis.setSpanName(stats.getSpanName());
-                    analysis.setAvgDurationMs(stats.getAvgDuration());
-                    analysis.setP99DurationMs(stats.getP99Latency());
-                    analysis.setCallCount(stats.getTotalCalls());
-                    analysis.setErrorRate(stats.getErrorRate());
-                    return analysis;
-                })
-                .sorted((a, b) -> Long.compare(b.getP99DurationMs(), a.getP99DurationMs()))
-                .collect(Collectors.toList());
+            .filter(stats -> stats.getP99LatencyMs() > SLOW_THRESHOLD_MS)
+            .sorted((a, b) -> Long.compare(b.getP99LatencyMs(), a.getP99LatencyMs()))
+            .limit(10)
+            .map(stats -> {
+                Map<String, Object> result = new HashMap<>();
+                result.put("spanName", stats.getSpanName());
+                result.put("callCount", stats.getCallCount().get());
+                result.put("avgLatencyMs", stats.getAvgLatencyMs());
+                result.put("p99LatencyMs", stats.getP99LatencyMs());
+                result.put("errorRate", stats.getErrorRate());
+                return result;
+            })
+            .collect(Collectors.toList());
     }
 
     /**
-     * 清空统计数据
+     * 生成追踪报告
      */
-    public void clearStats() {
-        spanStatsMap.clear();
-        dependencyMap.clear();
-        slowTraces.clear();
-        errorTraces.clear();
-        log.info("追踪统计数据已清空");
+    public Map<String, Object> generateReport() {
+        Map<String, Object> report = new HashMap<>();
+        report.put("generatedAt", Instant.now().toString());
+        report.put("totalSpans", spanStatsMap.size());
+        report.put("totalSlowTraces", slowTraces.size());
+        report.put("totalErrorTraces", errorTraces.size());
+        report.put("spanStats", getSpanStats());
+        report.put("bottlenecks", getPerformanceBottlenecks());
+        report.put("dependencies", getServiceDependencies());
+        return report;
     }
 
-    // ============ 内部数据类 ============
-
+    // 数据类
     @Data
     public static class SpanStats {
         private String spanName;
-        private final AtomicLong totalCalls = new AtomicLong(0);
-        private final AtomicLong errorCalls = new AtomicLong(0);
-        private final AtomicLong totalDuration = new AtomicLong(0);
-        private final List<Long> durations = Collections.synchronizedList(new ArrayList<>());
-        
-        public void recordCall(long durationMs, boolean isError) {
-            totalCalls.incrementAndGet();
-            totalDuration.addAndGet(durationMs);
-            if (isError) errorCalls.incrementAndGet();
-            
-            // 保留最近1000个样本用于计算P99
-            synchronized (durations) {
-                if (durations.size() >= 1000) {
-                    durations.remove(0);
-                }
-                durations.add(durationMs);
+        private final AtomicLong callCount = new AtomicLong(0);
+        private final AtomicLong totalLatencyMs = new AtomicLong(0);
+        private final AtomicLong errorCount = new AtomicLong(0);
+        private final List<Long> latencies = Collections.synchronizedList(new ArrayList<>());
+
+        public void recordCall(long latencyMs, boolean isError) {
+            callCount.incrementAndGet();
+            totalLatencyMs.addAndGet(latencyMs);
+            if (isError) {
+                errorCount.incrementAndGet();
+            }
+            latencies.add(latencyMs);
+            if (latencies.size() > 1000) {
+                latencies.remove(0);
             }
         }
-        
-        public long getAvgDuration() {
-            long calls = totalCalls.get();
-            return calls > 0 ? totalDuration.get() / calls : 0;
+
+        public long getCallCount() {
+            return callCount.get();
         }
-        
-        public long getP99Latency() {
-            synchronized (durations) {
-                if (durations.isEmpty()) return 0;
-                
-                List<Long> sorted = durations.stream()
-                        .sorted()
-                        .collect(Collectors.toList());
-                
-                int p99Index = (int) (sorted.size() * 0.99);
-                return sorted.get(p99Index);
-            }
+
+        public double getAvgLatencyMs() {
+            long count = callCount.get();
+            return count > 0 ? (double) totalLatencyMs.get() / count : 0;
         }
-        
+
+        public long getP99LatencyMs() {
+            if (latencies.isEmpty()) return 0;
+            List<Long> sorted = latencies.stream().sorted().collect(Collectors.toList());
+            int index = (int) (sorted.size() * 0.99);
+            return sorted.get(Math.min(index, sorted.size() - 1));
+        }
+
         public double getErrorRate() {
-            long calls = totalCalls.get();
-            return calls > 0 ? (double) errorCalls.get() / calls : 0;
+            long count = callCount.get();
+            return count > 0 ? (double) errorCount.get() / count : 0;
         }
-    }
-
-    @Data
-    public static class SlowTraceRecord {
-        private String traceId;
-        private String spanId;
-        private String spanName;
-        private long durationMs;
-        private Instant timestamp;
-        private Map<String, String> tags;
-    }
-
-    @Data
-    public static class ErrorTraceRecord {
-        private String traceId;
-        private String spanId;
-        private String spanName;
-        private long durationMs;
-        private Instant timestamp;
-        private String errorType;
-        private String errorMessage;
-        private Map<String, String> tags;
     }
 
     @Data
@@ -284,18 +255,34 @@ public class TraceAnalysisService {
         private String fromService;
         private String toService;
         private final AtomicLong callCount = new AtomicLong(0);
-        
+
         public void incrementCallCount() {
             callCount.incrementAndGet();
+        }
+
+        public long getCallCount() {
+            return callCount.get();
         }
     }
 
     @Data
-    public static class BottleneckAnalysis {
+    public static class SlowTraceRecord {
         private String spanName;
-        private long avgDurationMs;
-        private long p99DurationMs;
-        private long callCount;
-        private double errorRate;
+        private String traceId;
+        private String spanId;
+        private long durationMs;
+        private Instant timestamp;
+        private Map<String, String> tags;
+    }
+
+    @Data
+    public static class ErrorTraceRecord {
+        private String spanName;
+        private String traceId;
+        private String spanId;
+        private long durationMs;
+        private Instant timestamp;
+        private Map<String, String> tags;
+        private String errorMessage;
     }
 }
