@@ -2,6 +2,7 @@ package com.example.common.cache;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
+@ConditionalOnBean({CacheManager.class, RedisTemplate.class})
 public class MultiLevelCacheService {
 
     private final CacheManager localCacheManager;

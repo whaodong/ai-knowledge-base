@@ -1,6 +1,7 @@
 package com.example.rag.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
@@ -70,6 +71,7 @@ public class CacheConfig {
      * Redis分布式缓存管理器（L2缓存）
      */
     @Bean
+    @ConditionalOnBean(RedisConnectionFactory.class)
     public CacheManager redisCacheManager(RedisConnectionFactory connectionFactory) {
         // 默认缓存配置
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()

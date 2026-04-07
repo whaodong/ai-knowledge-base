@@ -4,6 +4,7 @@ import com.example.common.cache.MultiLevelCacheService;
 import com.example.common.cache.MultiLevelCacheService.CacheStats;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.redis.connection.RedisServerCommands;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -29,6 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 @Slf4j
 @Service
+@ConditionalOnBean(MultiLevelCacheService.class)
 public class CacheMonitorService {
 
     private final MultiLevelCacheService cacheService;
