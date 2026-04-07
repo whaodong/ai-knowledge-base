@@ -344,7 +344,7 @@ public class IndexStrategySelector {
                     .withMetricType(io.milvus.param.MetricType.COSINE)
                     .withExtraParam(result.getIndexParams().toString());
 
-            R<RpcStatus> response = milvusClient.createIndex(builder.build());
+            R<Boolean> response = milvusClient.createIndex(builder.build());
             
             if (response.getStatus() == R.Status.Success.getCode()) {
                 log.info("成功创建索引: {}, 类型: {}", indexName, result.getIndexType());
