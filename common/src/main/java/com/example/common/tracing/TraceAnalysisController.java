@@ -70,7 +70,7 @@ public class TraceAnalysisController {
         if (span != null) {
             traceInfo.put("traceId", span.context().traceId());
             traceInfo.put("spanId", span.context().spanId());
-            traceInfo.put("tags", span.getTags().toString());
+            traceInfo.put("tags", "span tags not available in Micrometer Tracing 1.3.0");
         } else {
             traceInfo.put("message", "No active trace");
         }

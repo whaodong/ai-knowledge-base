@@ -118,7 +118,7 @@ public class TraceAnalysisService {
         record.setSpanId(span.context().spanId());
         record.setDurationMs(durationMs);
         record.setTimestamp(Instant.now());
-        record.setTags(new HashMap<>(span.getTags()));
+        record.setTags(new HashMap<>());
         
         slowTraces.add(record);
     }
@@ -134,7 +134,7 @@ public class TraceAnalysisService {
         record.setSpanId(span.context().spanId());
         record.setDurationMs(durationMs);
         record.setTimestamp(Instant.now());
-        record.setTags(new HashMap<>(span.getTags()));
+        record.setTags(new HashMap<>());
         record.setErrorMessage(error != null ? error.getMessage() : "Unknown error");
         
         errorTraces.add(record);
@@ -183,7 +183,7 @@ public class TraceAnalysisService {
             .map(stats -> {
                 Map<String, Object> result = new HashMap<>();
                 result.put("spanName", stats.getSpanName());
-                result.put("callCount", stats.getCallCount().get());
+                result.put("callCount", stats.getCallCount());
                 result.put("avgLatencyMs", stats.getAvgLatencyMs());
                 result.put("p99LatencyMs", stats.getP99LatencyMs());
                 result.put("errorRate", stats.getErrorRate());

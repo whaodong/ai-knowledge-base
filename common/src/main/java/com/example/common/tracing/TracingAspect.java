@@ -79,7 +79,7 @@ public class TracingAspect {
             
             // 记录统计信息
             Duration duration = Duration.between(startTime, Instant.now());
-            traceAnalysisService.recordSpanCompletion(span, duration);
+            traceAnalysisService.recordSpanCompletion(span, duration, spanName);
         }
     }
 
@@ -111,7 +111,7 @@ public class TracingAspect {
             span.end();
             
             Duration duration = Duration.between(startTime, Instant.now());
-            traceAnalysisService.recordSpanCompletion(span, duration);
+            traceAnalysisService.recordSpanCompletion(span, duration, spanName);
         }
     }
 

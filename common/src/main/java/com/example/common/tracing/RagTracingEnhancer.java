@@ -168,7 +168,7 @@ public class RagTracingEnhancer {
             span.tag("external.api", apiName);
             span.tag("external.duration_ms", String.valueOf(durationMs));
             
-            traceAnalysisService.recordServiceDependency(
+            traceAnalysisService.recordServiceCall(
                     tracer.currentSpan() != null ? "current-service" : "unknown",
                     serviceName
             );
