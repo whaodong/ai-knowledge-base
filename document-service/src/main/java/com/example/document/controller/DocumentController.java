@@ -194,7 +194,7 @@ public class DocumentController {
         
         documentService.deleteDocument(id);
         
-        return ResponseEntity.ok(Result.success("文档删除成功"));
+        return ResponseEntity.ok(Result.success(null));
     }
 
     /**
@@ -218,7 +218,7 @@ public class DocumentController {
         
         documentService.batchDeleteDocuments(ids);
         
-        return ResponseEntity.ok(Result.success("批量删除成功"));
+        return ResponseEntity.ok(Result.success(null));
     }
 
     /**
