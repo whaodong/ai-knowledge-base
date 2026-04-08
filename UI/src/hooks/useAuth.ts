@@ -31,8 +31,8 @@ export const useAuth = () => {
   return {
     user,
     isAuthenticated,
-    login: loginMutation.mutate,
-    register: registerMutation.mutate,
+    login: loginMutation.mutateAsync,
+    register: registerMutation.mutateAsync,
     logout,
     isLoginLoading: loginMutation.isPending,
     isRegisterLoading: registerMutation.isPending

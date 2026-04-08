@@ -1,26 +1,19 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Checkbox, message, Card } from 'antd';
+import React from 'react';
+import { Form, Input, Button, Checkbox, Card } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import type { LoginRequest } from '@/types/api';
 import styles from './Login.module.css';
 
 const Login: React.FC = () => {
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isLoginLoading } = useAuth();
 
   const onFinish = async (values: LoginRequest) => {
-    setLoading(true);
     try {
-      await login(values.username, values.password);
-      message.success('登录成功');
-      navigate('/documents');
-    } catch (error: any) {
-      message.error(error.response?.data?.message || '登录失败，请检查用户名和密码');
-    } finally {
-      setLoading(false);
+      await login(values);
+    } catch {
+      // 错误提示与跳转已在 useAuth 中统一处理
     }
   };
 
@@ -83,9 +76,6 @@ const Login: React.FC = () => {
               <Checkbox name="remember" defaultChecked>
                 保持登录会话
               </Checkbox>
-              <Link to="/forgot-password" className={styles.forgotLink}>
-                忘记密码？
-              </Link>
             </div>
           </Form.Item>
 
@@ -93,7 +83,7 @@ const Login: React.FC = () => {
             <Button
               type="primary"
               htmlType="submit"
-              loading={loading}
+              loading={isLoginLoading}
               className={styles.submitButton}
               block
             >

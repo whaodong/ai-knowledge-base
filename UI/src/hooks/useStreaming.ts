@@ -6,7 +6,7 @@ import { useChatStore } from '@/stores/chatStore'
 export const useStreaming = (sessionId: string) => {
   const [isStreaming, setIsStreaming] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
-  const { addMessage } = useChatStore()
+  const { addMessage, upsertMessage } = useChatStore()
 
   const sendMessage = useCallback((content: string) => {
     if (isStreaming) return
@@ -35,8 +35,13 @@ export const useStreaming = (sessionId: string) => {
     let fullContent = ''
 
     eventSource.onmessage = (event) => {
+      if (event.data === '[DONE]') {
+        eventSource.close()
+        setIsStreaming(false)
+        return
+      }
       fullContent += event.data
-      useChatStore.getState().addMessage(sessionId, {
+      upsertMessage(sessionId, {
         id: assistantMessageId,
         role: 'assistant',
         content: fullContent,
@@ -49,7 +54,7 @@ export const useStreaming = (sessionId: string) => {
       setIsStreaming(false)
       message.error('连接失败')
     }
-  }, [sessionId, isStreaming, addMessage])
+  }, [sessionId, isStreaming, addMessage, upsertMessage])
 
   const stopStreaming = useCallback(() => {
     eventSourceRef.current?.close()

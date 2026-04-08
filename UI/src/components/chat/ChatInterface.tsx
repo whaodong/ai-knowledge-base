@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Card, Button, Input, Empty } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
+import { Card, Button, Input, Empty, List } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
 import ReactMarkdown from 'react-markdown'
 import { v4 as uuidv4 } from 'uuid'
@@ -9,16 +9,27 @@ import { useStreaming } from '@/hooks/useStreaming'
 const { TextArea } = Input
 
 const ChatInterface = () => {
-  const [sessionId] = useState(uuidv4())
+  const [sessionId, setSessionId] = useState(uuidv4())
   const [input, setInput] = useState('')
-  const { currentSession, addSession, setCurrentSession } = useChatStore()
+  const { sessions, currentSession, addSession, setCurrentSession } = useChatStore()
   const { isStreaming, sendMessage } = useStreaming(sessionId)
 
-  useState(() => {
-    const session = { id: sessionId, title: '新对话', messages: [], created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+  useEffect(() => {
+    const existing = sessions.find((s) => s.id === sessionId)
+    if (existing) {
+      setCurrentSession(existing)
+      return
+    }
+    const now = new Date().toISOString()
+    const session = { id: sessionId, title: '新对话', messages: [], created_at: now, updated_at: now }
     addSession(session)
     setCurrentSession(session)
-  })
+  }, [addSession, sessionId, sessions, setCurrentSession])
+
+  const sortedSessions = useMemo(
+    () => [...sessions].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
+    [sessions]
+  )
 
   const handleSend = () => {
     if (input.trim() && !isStreaming) {
@@ -27,10 +38,38 @@ const ChatInterface = () => {
     }
   }
 
+  const handleCreateSession = () => {
+    if (isStreaming) return
+    setSessionId(uuidv4())
+    setInput('')
+  }
+
+  const handleSelectSession = (id: string) => {
+    if (isStreaming) return
+    const next = sessions.find((s) => s.id === id)
+    if (!next) return
+    setSessionId(next.id)
+    setCurrentSession(next)
+  }
+
   return (
     <div className="flex h-[calc(100vh-200px)] gap-4">
-      <Card className="w-64" title="会话" extra={<Button type="text" icon={<PlusOutlined />} />}>
-        <Empty description="暂无会话" />
+      <Card className="w-64" title="会话" extra={<Button type="text" icon={<PlusOutlined />} onClick={handleCreateSession} />}>
+        {sortedSessions.length === 0 ? (
+          <Empty description="暂无会话" />
+        ) : (
+          <List
+            size="small"
+            dataSource={sortedSessions}
+            renderItem={(item) => (
+              <List.Item className={item.id === sessionId ? 'bg-gray-100 rounded px-2' : 'px-2'}>
+                <button type="button" className="w-full text-left" onClick={() => handleSelectSession(item.id)}>
+                  {item.title}
+                </button>
+              </List.Item>
+            )}
+          />
+        )}
       </Card>
       <Card className="flex-1 flex flex-col">
         <div className="flex-1 overflow-auto mb-4">

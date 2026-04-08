@@ -41,7 +41,7 @@ const DocumentUpload = ({ open, onClose }: Props) => {
           setFileList([...fileList, file])
           return false
         }}
-        fileList={fileList as unknown as Parameters<NonNullable<typeof Dragger.defaultProps['onChange']>>[0]['fileList']}
+        fileList={fileList as unknown as any[]}
         onRemove={(file) => {
           const index = fileList.indexOf(file as unknown as File)
           const newFileList = fileList.slice()

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Table, Tag, Button, Space, Modal, Popconfirm } from 'antd'
+import { Table, Tag, Button, Space, Popconfirm } from 'antd'
 import { DeleteOutlined, EyeOutlined, UploadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { useDocuments, useDocumentMutations } from '@/hooks/useDocuments'

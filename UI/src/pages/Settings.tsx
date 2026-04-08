@@ -1,4 +1,4 @@
-import { Card, Form, Select, Switch } from 'antd'
+import { Card, Form, Select } from 'antd'
 import { useSettingsStore } from '@/stores/settingsStore'
 
 const { Option } = Select
