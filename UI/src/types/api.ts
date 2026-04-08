@@ -1,38 +1,88 @@
-export interface ApiResponse<T = unknown> {
+// 统一响应格式（匹配后端 Result<T>）
+export interface Result<T = unknown> {
   code: number
   message: string
   data: T
+  timestamp: string
+  traceId?: string
 }
 
-export interface PaginatedResponse<T> {
-  items: T[]
+// 分页请求（匹配后端 PageRequest）
+export interface PageRequest {
+  pageNum: number
+  pageSize: number
+  sortBy?: string
+  sortOrder?: 'ASC' | 'DESC'
+}
+
+// 分页响应（匹配后端 PageResponse<T>）
+export interface PageResponse<T> {
+  records: T[]
   total: number
-  page: number
-  page_size: number
+  pageNum: number
+  pageSize: number
+  totalPages: number
+  hasNext: boolean
+  hasPrevious: boolean
 }
 
+// 登录请求（匹配后端 LoginRequest）
 export interface LoginRequest {
   username: string
   password: string
 }
 
-export interface LoginResponse {
-  token: string
-  user: User
+// 认证响应（匹配后端 AuthResponse）
+export interface AuthResponse {
+  accessToken: string
+  refreshToken: string
+  tokenType: string
+  expiresIn: number
+  username: string
+  role: string
 }
 
+// 注册请求（匹配后端 RegisterRequest）
 export interface RegisterRequest {
   username: string
   password: string
-  email: string
-  role?: 'USER' | 'ADMIN'
+  email?: string
 }
 
+// 用户信息
 export interface User {
   id: string
   username: string
-  email: string
-  role: 'USER' | 'ADMIN'
-  created_at: string
-  updated_at: string
+  email?: string
+  role: 'VIEWER' | 'USER' | 'ADMIN'
+  createdAt: string
+  updatedAt: string
+}
+
+// 错误码枚举（匹配后端 ErrorCode）
+export enum ErrorCode {
+  SUCCESS = 200,
+  BAD_REQUEST = 400,
+  UNAUTHORIZED = 401,
+  FORBIDDEN = 403,
+  NOT_FOUND = 404,
+  INTERNAL_SERVER_ERROR = 500,
+  SERVICE_UNAVAILABLE = 503,
+  
+  // 文档服务错误 2xxx
+  DOCUMENT_NOT_FOUND = 2001,
+  DOCUMENT_UPLOAD_FAILED = 2002,
+  DOCUMENT_PARSE_FAILED = 2003,
+  
+  // 向量化服务错误 3xxx
+  EMBEDDING_GENERATION_FAILED = 3001,
+  EMBEDDING_TASK_NOT_FOUND = 3002,
+  
+  // RAG服务错误 4xxx
+  RAG_QUERY_FAILED = 4001,
+  RAG_SESSION_NOT_FOUND = 4002,
+  
+  // Milvus服务错误 5xxx
+  MILVUS_CONNECTION_FAILED = 5001,
+  MILVUS_SEARCH_FAILED = 5004
 }

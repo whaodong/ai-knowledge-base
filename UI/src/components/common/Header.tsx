@@ -1,34 +1,23 @@
-import { Layout, Dropdown, Avatar, Button } from 'antd'
-import { UserOutlined, LogoutOutlined, BulbOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import { Layout, Space, Button, Typography } from 'antd'
+import { BellOutlined, QuestionCircleOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/stores/authStore'
-import { useSettingsStore } from '@/stores/settingsStore'
 
 const { Header: AntHeader } = Layout
+const { Text } = Typography
 
 const Header = () => {
-  const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
-  const { theme, toggleTheme } = useSettingsStore()
-
-  const menuItems = [
-    { key: 'logout', icon: <LogoutOutlined />, label: '退出', onClick: () => { logout(); navigate('/login') } }
-  ]
+  const { user } = useAuthStore()
 
   return (
-    <AntHeader className="flex items-center justify-between bg-white shadow-sm px-6">
-      <div className="text-lg font-semibold">AI知识库</div>
-      <div className="flex items-center gap-4">
-        <Button icon={<BulbOutlined />} onClick={toggleTheme}>
-          {theme === 'light' ? '深色' : '浅色'}
-        </Button>
-        <Dropdown menu={{ items: menuItems }}>
-          <div className="flex items-center cursor-pointer">
-            <Avatar icon={<UserOutlined />} />
-            <span className="ml-2">{user?.username}</span>
-          </div>
-        </Dropdown>
+    <AntHeader className="bg-white shadow-sm px-6 flex items-center justify-between">
+      <div>
+        <Text strong>AI Knowledge Base</Text>
+        <Text type="secondary" className="ml-4">企业级知识库管理系统</Text>
       </div>
+      <Space>
+        <Button type="text" icon={<QuestionCircleOutlined />}>帮助</Button>
+        <Button type="text" icon={<BellOutlined />}>通知</Button>
+      </Space>
     </AntHeader>
   )
 }

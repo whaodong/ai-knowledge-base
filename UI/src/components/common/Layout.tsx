@@ -11,7 +11,7 @@ const Layout = () => {
       <Sidebar />
       <AntLayout>
         <Header />
-        <Content className="p-6 bg-gray-50">
+        <Content className="p-6 bg-gray-50 overflow-auto">
           <Outlet />
         </Content>
       </AntLayout>

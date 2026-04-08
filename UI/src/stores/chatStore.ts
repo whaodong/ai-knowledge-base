@@ -1,47 +1,46 @@
 import { create } from 'zustand'
-import type { Message, ChatSession } from '@/types/chat'
+import type { Message } from '@/types/chat'
 
 interface ChatState {
-  sessions: ChatSession[]
-  currentSession: ChatSession | null
-  addSession: (session: ChatSession) => void
-  setCurrentSession: (session: ChatSession | null) => void
-  addMessage: (sessionId: string, message: Message) => void
-  upsertMessage: (sessionId: string, message: Message) => void
+  messages: Message[]
+  sessionId: string | null
+  addMessage: (message: Message) => void
+  updateLastMessage: (content: string, finished: boolean, references?: Message['references']) => void
+  clearMessages: () => void
+  setSessionId: (id: string | null) => void
 }
 
-export const useChatStore = create<ChatState>((set) => ({
-  sessions: [],
-  currentSession: null,
-  addSession: (session) => set((state) => ({ sessions: [session, ...state.sessions] })),
-  setCurrentSession: (session) => set({ currentSession: session }),
-  addMessage: (sessionId, message) => set((state) => {
-    const updatedSessions = state.sessions.map((s) =>
-      s.id === sessionId ? { ...s, messages: [...s.messages, message], updated_at: message.timestamp } : s
-    )
-    const updatedCurrentSession = state.currentSession?.id === sessionId
-      ? { ...state.currentSession, messages: [...state.currentSession.messages, message], updated_at: message.timestamp }
-      : state.currentSession
-    return { sessions: updatedSessions, currentSession: updatedCurrentSession }
-  }),
-  upsertMessage: (sessionId, message) => set((state) => {
-    const applyUpsert = (messages: Message[]) => {
-      const idx = messages.findIndex((m) => m.id === message.id)
-      if (idx === -1) {
-        return [...messages, message]
+export const useChatStore = create<ChatState>((set, get) => ({
+  messages: [],
+  sessionId: null,
+  
+  addMessage: (message) => {
+    set((state) => ({
+      messages: [...state.messages, message]
+    }))
+  },
+  
+  updateLastMessage: (content, finished, references) => {
+    set((state) => {
+      const messages = [...state.messages]
+      const lastIndex = messages.length - 1
+      if (lastIndex >= 0 && messages[lastIndex].role === 'assistant') {
+        messages[lastIndex] = {
+          ...messages[lastIndex],
+          content,
+          finished,
+          references
+        }
       }
-      const next = [...messages]
-      next[idx] = { ...next[idx], ...message }
-      return next
-    }
-
-    const updatedSessions = state.sessions.map((s) =>
-      s.id === sessionId ? { ...s, messages: applyUpsert(s.messages), updated_at: message.timestamp } : s
-    )
-    const updatedCurrentSession = state.currentSession?.id === sessionId
-      ? { ...state.currentSession, messages: applyUpsert(state.currentSession.messages), updated_at: message.timestamp }
-      : state.currentSession
-
-    return { sessions: updatedSessions, currentSession: updatedCurrentSession }
-  })
+      return { messages }
+    })
+  },
+  
+  clearMessages: () => {
+    set({ messages: [], sessionId: null })
+  },
+  
+  setSessionId: (id) => {
+    set({ sessionId: id })
+  }
 }))

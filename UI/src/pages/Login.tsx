@@ -1,112 +1,85 @@
-import React from 'react';
-import { Form, Input, Button, Checkbox, Card } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import type { LoginRequest } from '@/types/api';
-import styles from './Login.module.css';
+import { useState } from 'react'
+import { Form, Input, Button, Card, message, Typography } from 'antd'
+import { UserOutlined, LockOutlined } from '@ant-design/icons'
+import { useNavigate, Link } from 'react-router-dom'
+import { authApi } from '@/api/auth'
+import { useAuthStore } from '@/stores/authStore'
+import type { LoginRequest } from '@/types/api'
+import './Login.module.css'
 
-const Login: React.FC = () => {
-  const { login, isLoginLoading } = useAuth();
+const { Title, Text } = Typography
+
+const Login = () => {
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+  const { login } = useAuthStore()
 
   const onFinish = async (values: LoginRequest) => {
+    setLoading(true)
     try {
-      await login(values);
-    } catch {
-      // 错误提示与跳转已在 useAuth 中统一处理
+      const res = await authApi.login(values)
+      if (res.code === 200 && res.data) {
+        const { accessToken, refreshToken, username, role } = res.data
+        login(
+          { id: '', username, role: role as 'USER' | 'ADMIN', createdAt: '', updatedAt: '' },
+          accessToken,
+          refreshToken
+        )
+        message.success('登录成功')
+        navigate('/documents')
+      } else {
+        message.error(res.message || '登录失败')
+      }
+    } catch (error) {
+      message.error('登录失败，请检查用户名和密码')
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className={styles.container}>
-      {/* 背景装饰 */}
-      <div className={styles.background}>
-        <div className={styles.gradientOrb1} />
-        <div className={styles.gradientOrb2} />
-        <div className={styles.gradientOrb3} />
-      </div>
-
-      {/* 登录卡片 */}
-      <Card className={styles.loginCard}>
-        {/* Logo区域 */}
-        <div className={styles.logoSection}>
-          <div className={styles.logoIcon}>
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <h1 className={styles.title}>AI Knowledge Base</h1>
-          <p className={styles.subtitle}>企业级智能知识库系统</p>
+    <div className="login-container">
+      <Card className="login-card" style={{ width: 400 }}>
+        <div className="text-center mb-8">
+          <Title level={2}>AI Knowledge Base</Title>
+          <Text type="secondary">企业级知识库管理系统</Text>
         </div>
-
-        {/* 登录表单 */}
+        
         <Form
           name="login"
           onFinish={onFinish}
-          layout="vertical"
-          className={styles.form}
+          autoComplete="off"
           size="large"
         >
           <Form.Item
             name="username"
             rules={[{ required: true, message: '请输入用户名' }]}
           >
-            <Input
-              prefix={<UserOutlined className={styles.inputIcon} />}
-              placeholder="用户名或邮箱地址"
-              className={styles.input}
-            />
+            <Input prefix={<UserOutlined />} placeholder="用户名" />
           </Form.Item>
 
           <Form.Item
             name="password"
             rules={[{ required: true, message: '请输入密码' }]}
           >
-            <Input.Password
-              prefix={<LockOutlined className={styles.inputIcon} />}
-              placeholder="密码"
-              className={styles.input}
-            />
+            <Input.Password prefix={<LockOutlined />} placeholder="密码" />
           </Form.Item>
 
           <Form.Item>
-            <div className={styles.formOptions}>
-              <Checkbox name="remember" defaultChecked>
-                保持登录会话
-              </Checkbox>
-            </div>
-          </Form.Item>
-
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={isLoginLoading}
-              className={styles.submitButton}
-              block
-            >
+            <Button type="primary" htmlType="submit" loading={loading} block>
               登录
             </Button>
           </Form.Item>
+
+          <div className="text-center">
+            <Text type="secondary">
+              还没有账号？ <Link to="/register">立即注册</Link>
+            </Text>
+          </div>
         </Form>
-
-        {/* 注册提示 */}
-        <div className={styles.footer}>
-          <span className={styles.footerText}>还没有账号？</span>
-          <Link to="/register" className={styles.registerLink}>
-            立即注册
-          </Link>
-        </div>
       </Card>
-
-      {/* 底部版权 */}
-      <div className={styles.copyright}>
-        © 2026 AI Knowledge Base. All rights reserved.
-      </div>
     </div>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login

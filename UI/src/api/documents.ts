@@ -1,20 +1,40 @@
 import apiClient from './client'
-import type { PaginatedResponse } from '@/types/api'
-import type { Document, DocumentQueryParams } from '@/types/document'
+import type { Result, PageResponse } from '@/types/api'
+import type { Document, DocumentQueryParams, DocumentBatchUploadResponse } from '@/types/document'
 
 export const documentsApi = {
-  getDocuments: (params: DocumentQueryParams): Promise<PaginatedResponse<Document>> => 
+  // 获取文档列表（分页）
+  getDocuments: (params: DocumentQueryParams): Promise<Result<PageResponse<Document>>> =>
     apiClient.get('/api/v1/documents', { params }),
-  
-  uploadDocument: (file: File, title?: string): Promise<Document> => {
+
+  // 上传单个文档
+  uploadDocument: (file: File, title?: string): Promise<Result<Document>> => {
     const formData = new FormData()
     formData.append('file', file)
     if (title) formData.append('title', title)
-    return apiClient.post('/api/v1/documents/upload', formData, {
+    return apiClient.post('/api/v1/documents', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
   },
-  
-  deleteDocument: (id: string): Promise<void> => 
-    apiClient.delete(`/api/v1/documents/${id}`)
+
+  // 批量上传文档
+  batchUploadDocuments: (files: File[]): Promise<Result<DocumentBatchUploadResponse>> => {
+    const formData = new FormData()
+    files.forEach(file => formData.append('files', file))
+    return apiClient.post('/api/v1/documents/batch', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  // 获取文档详情
+  getDocument: (id: number): Promise<Result<Document>> =>
+    apiClient.get(`/api/v1/documents/${id}`),
+
+  // 删除文档
+  deleteDocument: (id: number): Promise<Result<void>> =>
+    apiClient.delete(`/api/v1/documents/${id}`),
+
+  // 批量删除文档
+  batchDeleteDocuments: (ids: number[]): Promise<Result<void>> =>
+    apiClient.delete('/api/v1/documents/batch', { data: ids })
 }
