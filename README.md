@@ -15,8 +15,13 @@
 | Spring Boot | 3.3.0 | 基础框架 |
 | Spring Cloud | 2023.0.1 | 微服务架构 |
 | Spring AI | 1.0.0-M3 | AI 集成框架 |
+| Milvus SDK | 2.3.4 | 向量数据库Java客户端 |
 | Milvus | 2.3+ | 向量数据库 |
 | LangChain4j | 0.30.0 | LLM 应用框架 |
+| Resilience4j | 2.2.0 | 熔断限流 |
+| SpringDoc | 2.5.0 | OpenAPI文档 |
+| jtokkit | 1.0.0 | Token计数 |
+| 通义千问 | qwen-plus | 阿里云大模型（OpenAI兼容模式） |
 
 ## 系统架构
 
@@ -39,7 +44,7 @@
                              │
                     ┌────────┴────────┐
                     │  Milvus Service │
-                    │     :8084       │
+                    │     :8086       │
                     └────────┬────────┘
                              │
                     ┌────────┴────────┐
@@ -52,14 +57,14 @@
 
 | 模块 | 端口 | 功能 |
 |------|------|------|
-| common | - | 公共模块，缓存配置、工具类 |
+| common | - | 公共模块，缓存配置、工具类、安全配置 |
 | api-gateway | 8080 | API 网关，路由转发、认证过滤 |
 | config-server | 8888 | 配置中心，统一配置管理 |
 | eureka-server | 8761 | 服务注册中心 |
 | document-service | 8081 | 文档解析与入库服务 |
 | embedding-service | 8082 | 向量嵌入生成服务 |
 | rag-service | 8083 | RAG 检索增强服务 |
-| milvus-service | 8084 | Milvus 向量数据库服务 |
+| milvus-service | 8086 | Milvus 向量数据库服务 |
 
 ## 快速开始
 
@@ -69,6 +74,7 @@
 - Maven 3.9+
 - Docker & Docker Compose
 - Milvus 2.3+
+- Redis (可选，用于缓存)
 
 ### 启动 Milvus
 
@@ -103,6 +109,73 @@ java -jar rag-service/target/rag-service-1.0.0-SNAPSHOT.jar
 java -jar api-gateway/target/api-gateway-1.0.0-SNAPSHOT.jar
 ```
 
+## 配置说明
+
+### 阿里云通义千问配置
+
+本项目使用阿里云通义千问（DashScope）作为 LLM 服务，通过 OpenAI 兼容模式接入：
+
+```yaml
+spring:
+  ai:
+    openai:
+      api-key: ${DASHSCOPE_API_KEY:your-api-key}
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      chat:
+        options:
+          model: qwen-plus
+      embedding:
+        enabled: true
+        base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+        api-key: ${DASHSCOPE_API_KEY:your-api-key}
+        options:
+          model: text-embedding-v3
+```
+
+**支持的模型：**
+- Chat: `qwen-plus`, `qwen-turbo`, `qwen-max`
+- Embedding: `text-embedding-v3`
+
+**获取 API Key：**
+1. 访问 [阿里云 DashScope](https://dashscope.console.aliyun.com/)
+2. 开通服务并创建 API Key
+3. 设置环境变量：`export DASHSCOPE_API_KEY=your-api-key`
+
+### Milvus 配置
+
+```yaml
+milvus:
+  host: ${MILVUS_HOST:localhost}
+  port: ${MILVUS_PORT:19530}
+  database: ${MILVUS_DATABASE:default}
+  collection:
+    name: ${MILVUS_COLLECTION_NAME:knowledge_base}
+    vector-dimension: ${MILVUS_VECTOR_DIMENSION:1024}
+    index-type: ${MILVUS_INDEX_TYPE:HNSW}
+    metric-type: ${MILVUS_METRIC_TYPE:COSINE}
+```
+
+### Redis 配置（可选）
+
+```yaml
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # password: 123456  # 如需密码认证
+```
+
+### Bean 覆盖配置
+
+由于存在自动配置和手动配置的 Bean 冲突，需启用覆盖：
+
+```yaml
+spring:
+  main:
+    allow-bean-definition-overriding: true
+```
+
 ## API 文档
 
 ### 访问在线文档
@@ -112,25 +185,7 @@ java -jar api-gateway/target/api-gateway-1.0.0-SNAPSHOT.jar
 - Eureka Dashboard: http://localhost:8761
 - Swagger UI (各服务): http://localhost:{port}/swagger-ui.html
 
-### RESTful API 设计
-
-本系统实现了完整的RESTful API，遵循以下设计原则：
-
-#### 统一响应格式
-
-所有API返回统一的 `Result<T>` 格式：
-
-```json
-{
-  "code": 200,
-  "message": "操作成功",
-  "data": { ... },
-  "timestamp": "2024-04-07T17:00:00",
-  "traceId": "req-12345"
-}
-```
-
-#### 主要API端点
+### 主要API端点
 
 **文档管理API** (Document Service - 8081)
 - `POST /api/v1/documents` - 上传文档
@@ -152,75 +207,56 @@ java -jar api-gateway/target/api-gateway-1.0.0-SNAPSHOT.jar
 **Token管理API** (RAG Service - 8083)
 - `POST /api/v1/tokens/count` - 计算文本Token数
 - `GET /api/v1/tokens/session/{sessionId}` - 获取会话Token统计
-- `GET /api/v1/tokens/session/{sessionId}/realtime` - 获取实时Token信息
 - `POST /api/v1/tokens/predict` - 预测Token使用
-- `GET /api/v1/tokens/user/{userId}/stats` - 获取用户Token统计
-- `GET /api/v1/tokens/trend` - 获取使用趋势分析
-- `GET /api/v1/tokens/report` - 获取Token使用报告
-- `GET /api/v1/tokens/anomalies/{userId}` - 检测异常Token使用
-- `POST /api/v1/tokens/optimize/suggestions` - 获取Token优化建议
-- `POST /api/v1/tokens/quota/{userId}` - 设置用户Token配额
-- `POST /api/v1/tokens/truncate` - 智能截断文本
-- `GET /api/v1/tokens/models` - 获取支持的模型信息
-- `POST /api/v1/tokens/adjust-topk` - 动态调整检索数量
 
-#### 详细API文档
-
-完整的API设计文档请参考：[docs/api-design.md](docs/api-design.md)
-
-包含：
-- 统一响应格式说明
-- 分页参数规范
-- 异常处理机制
-- 错误码定义
-- 各服务API详细说明
-- 请求/响应示例
+**Milvus向量操作API** (Milvus Service - 8086)
+- `POST /api/v1/milvus/collections` - 创建集合
+- `POST /api/v1/milvus/vectors` - 插入向量
+- `POST /api/v1/milvus/search` - 向量搜索
+- `GET /api/v1/milvus/stats` - 集合统计
 
 ## 核心功能
 
 ### RAG 检索增强生成
 
 1. **文档入库**: 支持 PDF、Word 等文档解析，自动分块
-2. **向量嵌入**: 使用 Embedding Model 生成文档向量
+2. **向量嵌入**: 使用通义千问 Embedding 模型生成文档向量
 3. **相似度搜索**: Milvus 向量检索
 4. **重排序**: CrossEncoder 精排
 5. **上下文增强**: 多路检索融合
 
 ### 增量式Token计数
 
-系统实现了完整的增量式Token计数功能，支持实时统计、配额管理、使用分析和智能优化：
+基于 jtokkit 库实现准确的 Token 计数：
 
-#### 流式Token计数
 - **实时统计**: 监听流式响应事件，增量累加Token数
 - **SSE支持**: 实时显示Token使用量
 - **预警机制**: 80%预警、95%临界预警
-- **性能监控**: Token计算性能追踪
-
-#### 会话Token管理
-- **累计统计**: 提问+回答Token累计
 - **配额管理**: 用户级、会话级Token配额
-- **超限处理**: 预警和自动截断
-- **历史记录**: 会话Token使用历史
-
-#### 上下文优化
-- **增量计算**: 新增内容增量Token计算
-- **差量优化**: 差量Token计算优化
-- **智能保留**: 基于重要性的上下文保留策略
-- **缓存复用**: 历史Token缓存复用
-
-#### 使用分析
-- **用户统计**: 按用户统计Token消耗
-- **趋势分析**: 按时间段分析使用趋势
 - **成本估算**: 支持多种模型定价
-- **异常检测**: 自动检测异常使用
 
-#### Token预测
-- **预估Token**: 预估回答Token数
-- **动态调整**: 动态调整检索结果数量
-- **超限预测**: 预测是否超出上下文窗口
-- **优化建议**: 智能提示词优化建议
+### 多级缓存系统
 
-详细文档请参考：[docs/incremental-token-counting.md](docs/incremental-token-counting.md)
+支持本地缓存（Caffeine）和分布式缓存（Redis）的多级缓存架构：
+
+- **防穿透**: 空值缓存
+- **防击穿**: 互斥锁
+- **防雪崩**: 过期时间随机化
+- **热点检测**: 基于Redis的热点查询识别
+- **智能预热**: 定时预热Top N热点查询
+
+**条件装配说明：**
+
+所有缓存相关服务使用 `@ConditionalOnBean({CacheManager.class, RedisTemplate.class})` 进行条件装配，当 Redis 不可用时，整个缓存服务链会自动跳过加载，不影响主业务运行。
+
+受影响的服务包括：
+- `MultiLevelCacheService` - 多级缓存服务
+- `RagCacheService` - RAG缓存服务
+- `CacheMonitorService` - 缓存监控服务
+- `CachePreheatService` - 缓存预热服务
+- `HotQueryDetector` - 热点查询检测器
+- `PerformanceTestService` - 性能测试服务
+- `CacheController` - 缓存管理控制器
 
 ### 分布式特性
 
@@ -230,80 +266,39 @@ java -jar api-gateway/target/api-gateway-1.0.0-SNAPSHOT.jar
 - **熔断限流**: Resilience4j
 - **分布式追踪**: Micrometer Tracing + Zipkin
 
-### 分布式追踪系统
+## Milvus SDK 2.3.4 API 变化
 
-本系统集成了完整的分布式追踪能力，支持Zipkin和Jaeger。
+本项目使用 Milvus Java SDK 2.3.4，相比旧版本有以下重要变化：
 
-#### 主要功能
+### 包路径变化
 
-1. **自动追踪**
-   - Service层方法自动追踪
-   - Repository层数据库访问追踪
-   - 支持自定义Span
+| 类 | 旧路径 | 新路径 |
+|---|--------|--------|
+| IndexType | `io.milvus.common.clientenum` | `io.milvus.param` |
+| MetricType | `io.milvus.common.clientenum` | `io.milvus.param` |
+| RpcStatus | `io.milvus.grpc` | `io.milvus.param` |
+| DataType | `io.milvus.param` | `io.milvus.grpc` |
 
-2. **AI服务链路追踪**
-   - 文档处理链路：上传→解析→分割→向量化→入库
-   - RAG查询链路：问题→检索→重排序→生成→返回
-   - Token使用追踪
-   - 外部API调用追踪
+### 方法变化
 
-3. **Trace分析**
-   - 慢请求分析（P99延迟）
-   - 错误链路追踪
-   - 服务依赖图生成
-   - 性能瓶颈定位
+| 旧方法 | 新方法 |
+|--------|--------|
+| `createIndex()` 返回 `R<Boolean>` | `createIndex()` 返回 `R<RpcStatus>` |
+| `IndexDescription.getIndexTypeName()` | `IndexDescription.getIndexName()` |
 
-#### 快速开始
+### 示例代码
 
-```bash
-# 启动Zipkin
-cd monitoring/tracing
-docker-compose up -d zipkin
+```java
+import io.milvus.param.IndexType;
+import io.milvus.param.MetricType;
+import io.milvus.param.RpcStatus;
+import io.milvus.grpc.DataType;
 
-# 访问Zipkin UI
-http://localhost:9411
-
-# 调用API生成追踪数据
-curl -X POST http://localhost:8080/api/v1/rag/retrieve \
-  -H "Content-Type: application/json" \
-  -d '{"query": "测试问题", "topK": 5}'
-
-# 查看追踪统计
-curl http://localhost:8080/api/v1/tracing/stats
-curl http://localhost:8080/api/v1/tracing/bottlenecks
-```
-
-详细文档：
-- [分布式追踪完整指南](docs/tracing-guide.md)
-- [快速开始指南](docs/tracing-quickstart.md)
-
-## 配置说明
-
-### Milvus 配置
-
-```yaml
-spring:
-  ai:
-    vectorstore:
-      milvus:
-        client:
-          host: localhost
-          port: 19530
-        database-name: default
-        collection-name: knowledge_base
-        embedding-dimension: 1536
-        index-type: HNSW
-        metric-type: COSINE
-```
-
-### OpenAI 配置
-
-```yaml
-spring:
-  ai:
-    openai:
-      api-key: ${OPENAI_API_KEY}
-      base-url: https://api.openai.com
+// 创建索引
+R<RpcStatus> response = milvusClient.createIndex(createIndexParam);
+if (response.getStatus() == R.Status.Success.getCode()) {
+    log.info("索引创建成功");
+}
 ```
 
 ## 项目结构
@@ -313,7 +308,10 @@ ai-knowledge-base/
 ├── common/                    # 公共模块
 │   └── src/main/java/
 │       └── com/example/common/
-│           └── cache/         # 多级缓存
+│           ├── cache/         # 多级缓存
+│           ├── security/      # 安全配置
+│           ├── token/         # Token计数
+│           └── tracing/       # 分布式追踪
 ├── api-gateway/               # API 网关
 │   └── src/main/java/
 │       └── com/example/apigateway/
@@ -328,6 +326,7 @@ ai-knowledge-base/
 │       └── com/example/rag/
 │           ├── controller/    # REST 控制器
 │           ├── service/       # 业务服务
+│           ├── cache/         # 缓存服务
 │           ├── retriever/     # 检索器
 │           ├── reranker/      # 重排序器
 │           └── model/         # 数据模型
@@ -336,8 +335,39 @@ ai-knowledge-base/
 │       └── com/example/milvus/
 │           ├── config/        # 配置类
 │           ├── controller/    # REST 控制器
-│           └── service/       # 向量操作服务
+│           └── index/         # 索引策略
 └── eureka-server/             # 服务注册中心
+```
+
+## 监控与告警系统
+
+本系统集成了完善的监控和告警体系，基于 Prometheus + Alertmanager + Grafana 构建。
+
+### 核心功能
+
+1. **性能基线告警**
+   - RAG查询P99延迟监控（基线3000ms）
+   - 向量化延迟监控（基线500ms）
+   - Milvus查询延迟监控（基线100ms）
+   - 缓存命中率监控（基线70%）
+
+2. **多级告警体系**
+   - **P0（紧急）**: 服务宕机、数据丢失、错误率>10%
+   - **P1（严重）**: 性能下降>50%、错误率>5%
+   - **P2（警告）**: 性能下降>20%、缓存命中率<50%
+   - **P3（提示）**: 资源使用预警
+
+### 快速开始
+
+```bash
+# 启动监控系统
+cd monitoring
+docker-compose up -d
+
+# 访问监控界面
+# Prometheus: http://localhost:9090
+# Alertmanager: http://localhost:9093
+# Grafana: http://localhost:3000 (admin/admin)
 ```
 
 ## 开发指南
@@ -354,6 +384,72 @@ ai-knowledge-base/
 - `develop`: 开发分支
 - `feature/*`: 功能分支
 
+### 本地开发
+
+```bash
+# 克隆项目
+git clone https://github.com/whaodong/ai-knowledge-base.git
+cd ai-knowledge-base
+
+# 编译（跳过依赖检查和测试）
+mvn clean install -DskipTests -Denforcer.skip=true
+
+# 启动单个服务（开发模式）
+cd rag-service
+mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=8083"
+```
+
+## 常见问题
+
+### Q: 启动时报 "OpenAI API key must be set"？
+
+A: 需要配置通义千问 API Key：
+
+```bash
+export DASHSCOPE_API_KEY=your-api-key
+```
+
+或在配置文件中设置：
+
+```yaml
+spring:
+  ai:
+    openai:
+      api-key: your-api-key
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+```
+
+### Q: 启动时报 "Parameter 0 of constructor required a bean of type 'MultiLevelCacheService'"？
+
+A: 这是正常的条件装配行为。当 Redis 未启动时，缓存相关服务会被跳过，不影响核心业务功能。
+
+如需使用缓存功能，请确保 Redis 已启动：
+
+```bash
+docker run -d --name redis -p 6379:6379 redis:latest
+```
+
+### Q: 编译时报依赖收敛错误？
+
+A: 使用以下命令跳过依赖检查：
+
+```bash
+mvn clean install -Denforcer.skip=true
+```
+
+### Q: Milvus 连接失败？
+
+A: 确保 Milvus 已启动：
+
+```bash
+# 检查 Milvus 状态
+docker ps | grep milvus
+
+# 启动 Milvus
+cd monitoring
+docker-compose up -d milvus-standalone
+```
+
 ## License
 
 MIT License
@@ -362,111 +458,6 @@ MIT License
 
 欢迎提交 Issue 和 Pull Request！
 
-## 监控与告警系统
+## 联系方式
 
-本系统集成了完善的监控和告警体系，基于Prometheus + Alertmanager + Grafana构建。
-
-### 核心功能
-
-1. **性能基线告警**
-   - RAG查询P99延迟监控（基线3000ms）
-   - 向量化延迟监控（基线500ms）
-   - Milvus查询延迟监控（基线100ms）
-   - 缓存命中率监控（基线70%）
-   - Token使用率监控（基线80%）
-
-2. **多级告警体系**
-   - **P0（紧急）**: 服务宕机、数据丢失、错误率>10%
-   - **P1（严重）**: 性能下降>50%、错误率>5%、内存>90%
-   - **P2（警告）**: 性能下降>20%、缓存命中率<50%、内存>85%
-   - **P3（提示）**: 资源使用预警、趋势分析
-
-3. **通知渠道**
-   - 邮件通知（所有级别）
-   - Slack（P0-P2）
-   - 企业微信/钉钉（P0-P1）
-   - 短信/电话（P0）
-
-### 快速开始
-
-```bash
-# 启动监控系统
-cd monitoring
-docker-compose up -d
-
-# 访问监控界面
-# Prometheus: http://localhost:9090
-# Alertmanager: http://localhost:9093
-# Grafana: http://localhost:3000 (admin/admin)
-
-# 运行告警测试
-./test-alerts.sh
-
-# 验证性能基线
-./test-alerts.sh
-# 选择选项10: 验证性能基线
-```
-
-### 告警测试
-
-```bash
-# 测试P0级别告警（服务宕机）
-curl -X POST http://localhost:9093/api/v1/alerts \
-  -H "Content-Type: application/json" \
-  -d '[
-    {
-      "labels": {
-        "alertname": "ServiceDown",
-        "severity": "critical",
-        "priority": "P0",
-        "instance": "test-service:8080"
-      },
-      "annotations": {
-        "summary": "测试服务宕机",
-        "description": "测试实例已宕机"
-      },
-      "startsAt": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
-    }
-  ]'
-
-# 查询活跃告警
-curl http://localhost:9093/api/v1/alerts
-```
-
-### 性能基线验证
-
-```bash
-# RAG查询P99延迟
-curl -s 'http://localhost:9090/api/v1/query?query=histogram_quantile(0.99,rate(rag_query_latency_seconds_bucket[5m]))'
-
-# 缓存命中率
-curl -s 'http://localhost:9090/api/v1/query?query=rate(rag_cache_hits_total[5m])/(rate(rag_cache_hits_total[5m])+rate(rag_cache_misses_total[5m]))'
-
-# Milvus查询延迟
-curl -s 'http://localhost:9090/api/v1/query?query=histogram_quantile(0.99,rate(milvus_query_latency_seconds_bucket[5m]))'
-```
-
-### 监控配置文件
-
-- `monitoring/performance-baselines.yml` - 性能基线配置
-- `monitoring/alert.rules.yml` - 告警规则（包含P0-P3多级告警）
-- `monitoring/alertmanager.yml` - Alertmanager完整配置
-- `monitoring/prometheus.yml` - Prometheus配置
-- `monitoring/grafana/alert-dashboard.json` - Grafana告警仪表盘
-- `monitoring/test-alerts.sh` - 告警测试脚本
-
-详细文档请参考：[告警测试文档](monitoring/docs/alert-testing-guide.md)
-
-## 持续集成
-
-本项目使用 GitHub Actions 实现持续集成和持续部署。
-
-### CI/CD 流程
-
-1. **代码检查**: 代码风格检查、单元测试
-2. **构建**: Maven 构建和打包
-3. **测试**: 自动化测试
-4. **部署**: Docker 镜像构建和推送
-
-查看构建状态：
-- [GitHub Actions](https://github.com/whaodong/ai-knowledge-base/actions)
+- GitHub: [https://github.com/whaodong/ai-knowledge-base](https://github.com/whaodong/ai-knowledge-base)
