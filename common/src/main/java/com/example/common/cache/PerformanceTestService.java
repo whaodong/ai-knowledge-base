@@ -3,6 +3,9 @@ package com.example.common.cache;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.cache.CacheManager;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -19,6 +22,7 @@ import java.util.stream.IntStream;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean({CacheManager.class, RedisTemplate.class})
 public class PerformanceTestService {
 
     private final MultiLevelCacheService cacheService;
