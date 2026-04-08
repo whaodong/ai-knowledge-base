@@ -14,11 +14,31 @@ import java.util.stream.Collectors;
 /**
  * 交叉编码器重排序器
  * 
- * <p>模拟Cross-Encoder重排序，使用嵌入模型计算查询与文档的相似度，
- * 对混合检索结果进行精细化重排序。</p>
+ * <h3>当前实现说明</h3>
+ * <p>本实现使用 Embedding 模型的余弦相似度作为 Cross-Encoder 的近似，存在以下局限：</p>
+ * <ul>
+ *   <li>精度：Embedding 相似度 ≠ Cross-Encoder 精排，召回质量可能下降 5-15%</li>
+ *   <li>性能：每个文档都需单独计算 Embedding，批量场景延迟较高</li>
+ *   <li>语义：无法捕获 Query-Doc 的深层交互特征</li>
+ * </ul>
  * 
- * <p>注：实际生产环境中应使用真正的Cross-Encoder模型（如sentence-transformers），
- * 本实现使用嵌入模型的余弦相似度作为近似。</p>
+ * <h3>生产环境建议</h3>
+ * <p>建议使用真正的 Cross-Encoder 模型替代：</p>
+ * <ul>
+ *   <li><b>HuggingFace</b>: sentence-transformers/cross-encoder-ms-marco-MiniLM-L-6-v2</li>
+ *   <li><b>阿里云</b>: text-rerank 模型（推荐，与通义千问配套）</li>
+ *   <li><b>Cohere</b>: rerank-english-v3.0 / rerank-multilingual-v3.0</li>
+ * </ul>
+ * 
+ * <h3>升级路径</h3>
+ * <p>实现真正的 Cross-Encoder 只需：</p>
+ * <ol>
+ *   <li>创建 CrossEncoderService 调用外部重排 API</li>
+ *   <li>修改本类注入 CrossEncoderService 替代 EmbeddingModel</li>
+ *   <li>调整 similarity-threshold 配置</li>
+ * </ol>
+ * 
+ * @see <a href="https://www.sbert.net/examples/applications/cross-encoder/README.html">Cross-Encoder Documentation</a>
  */
 @Slf4j
 @Component

@@ -6,6 +6,7 @@ import com.example.rag.dto.ChatRequest;
 import com.example.rag.dto.ChatResponse;
 import com.example.rag.model.RagRequest;
 import com.example.rag.model.RagResponse;
+import com.example.rag.model.RetrievalResult;
 import com.example.rag.service.RagRetrievalService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -16,18 +17,21 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
-import jakarta.validation.Valid;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * RAG检索控制器
@@ -41,13 +45,29 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RagController {
     
     private final RagRetrievalService ragRetrievalService;
-
-    // 模拟会话存储（实际应使用Redis或数据库）
+    private final ChatModel chatModel;
+    
+    // 会话存储（实际生产环境应使用Redis）
     private final Map<String, ChatHistoryResponse> sessionStore = new ConcurrentHashMap<>();
     
+    // RAG 系统提示词
+    private static final String RAG_SYSTEM_PROMPT = """
+        你是一个智能助手，基于提供的上下文信息回答用户问题。
+        
+        请遵循以下原则：
+        1. 仅基于提供的上下文信息回答问题
+        2. 如果上下文中没有相关信息，请诚实告知用户
+        3. 回答要准确、简洁、有帮助
+        4. 引用具体的文档来源增强可信度
+        
+        上下文信息：
+        {context}
+        """;
+    
     @Autowired
-    public RagController(RagRetrievalService ragRetrievalService) {
+    public RagController(RagRetrievalService ragRetrievalService, ChatModel chatModel) {
         this.ragRetrievalService = ragRetrievalService;
+        this.chatModel = chatModel;
     }
 
     @Value("${spring.application.name}")
@@ -90,7 +110,7 @@ public class RagController {
     }
 
     /**
-     * 流式对话
+     * 流式对话（真实RAG）
      */
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(
@@ -105,8 +125,8 @@ public class RagController {
     public SseEmitter chat(@Valid @RequestBody ChatRequest request) {
         log.info("收到RAG对话请求: {}", request.getMessage());
 
-        // 创建SSE发射器，设置超时时间为60秒
-        SseEmitter emitter = new SseEmitter(60000L);
+        // 创建SSE发射器，设置超时时间为120秒
+        SseEmitter emitter = new SseEmitter(120000L);
 
         // 异步处理
         new Thread(() -> {
@@ -117,54 +137,112 @@ public class RagController {
                     sessionId = UUID.randomUUID().toString();
                 }
 
-                // 模拟流式输出
-                String reply = "基于您的查询，我找到了以下相关信息：\n\n" +
-                        "1. 文档A中提到...\n" +
-                        "2. 文档B中说明...\n" +
-                        "3. 文档C中指出...\n\n" +
-                        "总结：这是一个模拟的RAG回复。";
+                // 1. RAG 检索获取相关文档
+                RagRequest ragRequest = RagRequest.builder()
+                        .query(request.getMessage())
+                        .topK(5)
+                        .build();
+                
+                RagResponse ragResponse = ragRetrievalService.retrieve(ragRequest);
+                
+                // 2. 构建上下文
+                String context = buildContext(ragResponse);
+                
+                // 3. 使用 ChatModel 进行流式对话
+                String systemPrompt = RAG_SYSTEM_PROMPT.replace("{context}", context);
+                
+                StringBuilder fullReply = new StringBuilder();
+                
+                ChatClient chatClient = ChatClient.builder(chatModel)
+                        .defaultSystem(systemPrompt)
+                        .build();
+                
+                Flux<String> responseFlux = chatClient.prompt()
+                        .user(request.getMessage())
+                        .call()
+                        .content();
+                
+                // 4. 流式输出
+                responseFlux.subscribe(
+                    chunk -> {
+                        try {
+                            fullReply.append(chunk);
+                            
+                            ChatResponse chatChunk = new ChatResponse();
+                            chatChunk.setSessionId(sessionId);
+                            chatChunk.setReply(fullReply.toString());
+                            chatChunk.setFinished(false);
+                            chatChunk.setTimestamp(LocalDateTime.now());
 
-                // 分段发送
-                String[] words = reply.split("");
-                StringBuilder sb = new StringBuilder();
-                for (String word : words) {
-                    sb.append(word);
-                    ChatResponse chunk = new ChatResponse();
-                    chunk.setSessionId(sessionId);
-                    chunk.setReply(sb.toString());
-                    chunk.setFinished(false);
-                    chunk.setTimestamp(LocalDateTime.now());
+                            emitter.send(SseEmitter.event()
+                                    .name("message")
+                                    .data(chatChunk));
+                        } catch (IOException e) {
+                            log.error("SSE发送失败", e);
+                        }
+                    },
+                    error -> {
+                        log.error("流式对话失败", error);
+                        emitter.completeWithError(error);
+                    },
+                    () -> {
+                        try {
+                            // 发送完成事件
+                            ChatResponse finalResponse = new ChatResponse();
+                            finalResponse.setSessionId(sessionId);
+                            finalResponse.setReply(fullReply.toString());
+                            finalResponse.setFinished(true);
+                            finalResponse.setTimestamp(LocalDateTime.now());
 
-                    emitter.send(SseEmitter.event()
-                            .name("message")
-                            .data(chunk));
+                            emitter.send(SseEmitter.event()
+                                    .name("done")
+                                    .data(finalResponse));
+                            emitter.complete();
 
-                    Thread.sleep(50); // 模拟延迟
-                }
+                            // 保存会话历史
+                            saveMessage(sessionId, "user", request.getMessage());
+                            saveMessage(sessionId, "assistant", fullReply.toString());
+                            
+                            log.info("RAG对话完成，sessionId: {}, 回复长度: {}", 
+                                    sessionId, fullReply.length());
+                        } catch (IOException e) {
+                            log.error("发送完成事件失败", e);
+                        }
+                    }
+                );
 
-                // 发送完成事件
-                ChatResponse finalResponse = new ChatResponse();
-                finalResponse.setSessionId(sessionId);
-                finalResponse.setReply(reply);
-                finalResponse.setFinished(true);
-                finalResponse.setTimestamp(LocalDateTime.now());
-
-                emitter.send(SseEmitter.event()
-                        .name("done")
-                        .data(finalResponse));
-                emitter.complete();
-
-                // 保存会话历史
-                saveMessage(sessionId, "user", request.getMessage());
-                saveMessage(sessionId, "assistant", reply);
-
-            } catch (IOException | InterruptedException e) {
-                log.error("流式对话失败", e);
+            } catch (Exception e) {
+                log.error("流式对话异常", e);
                 emitter.completeWithError(e);
             }
         }).start();
 
         return emitter;
+    }
+    
+    /**
+     * 构建RAG上下文
+     */
+    private String buildContext(RagResponse ragResponse) {
+        if (ragResponse == null || !ragResponse.isSuccess() || 
+            ragResponse.getRetrievedDocuments() == null || 
+            ragResponse.getRetrievedDocuments().isEmpty()) {
+            return "未找到相关上下文信息。";
+        }
+        
+        StringBuilder context = new StringBuilder();
+        List<RetrievalResult> docs = ragResponse.getRetrievedDocuments();
+        
+        for (int i = 0; i < docs.size(); i++) {
+            RetrievalResult doc = docs.get(i);
+            context.append(String.format("[文档%d] (来源: %s, 相关度: %.2f)\n%s\n\n",
+                    i + 1,
+                    doc.getDocumentId() != null ? doc.getDocumentId() : "未知",
+                    doc.getScore() != null ? doc.getScore() : 0.0,
+                    doc.getContent() != null ? doc.getContent() : ""));
+        }
+        
+        return context.toString();
     }
 
     /**
@@ -248,49 +326,53 @@ public class RagController {
         Map<String, Object> info = new HashMap<>();
         info.put("serviceName", appName);
         info.put("instanceId", appName + ":" + port);
-        info.put("status", "ACTIVE");
-        info.put("description", "RAG检索服务，提供检索增强生成能力");
-        info.put("endpoints", new String[] {
-            "POST /api/v1/rag/query - RAG查询",
-            "POST /api/v1/rag/chat - 流式对话",
-            "GET /api/v1/rag/history/{sessionId} - 会话历史",
-            "GET /api/v1/rag/search - 简化版检索"
-        });
         info.put("timestamp", System.currentTimeMillis());
+        info.put("features", Arrays.asList(
+            "hybrid-search", 
+            "cross-encoder-rerank", 
+            "streaming-chat",
+            "token-management"
+        ));
         return info;
     }
-
+    
     /**
      * 查询降级方法
      */
-    public ResponseEntity<Result<RagResponse>> queryFallback(RagRequest request, Throwable t) {
-        log.error("RAG查询降级，查询: {}", request.getQuery(), t);
+    public ResponseEntity<Result<RagResponse>> queryFallback(
+            RagRequest request, Throwable t) {
+        log.warn("RAG查询降级: {}", t.getMessage());
         
-        RagResponse response = new RagResponse();
-        response.setSuccess(false);
-        response.setErrorMessage("服务暂时不可用，请稍后重试");
+        RagResponse response = RagResponse.builder()
+                .success(false)
+                .errorMessage("服务暂时不可用，请稍后重试")
+                .query(request.getQuery())
+                .build();
         
-        return ResponseEntity.ok(Result.fail(503, "服务暂时不可用"));
+        return ResponseEntity.ok(Result.fail(503, "服务降级", response));
     }
-
+    
     /**
      * 保存消息到会话历史
      */
     private void saveMessage(String sessionId, String role, String content) {
-        ChatHistoryResponse history = sessionStore.computeIfAbsent(sessionId, id -> {
-            ChatHistoryResponse h = new ChatHistoryResponse();
-            h.setSessionId(id);
-            h.setMessages(new ArrayList<>());
-            h.setCreateTime(LocalDateTime.now());
-            return h;
-        });
-
-        ChatHistoryResponse.Message message = new ChatHistoryResponse.Message();
-        message.setRole(role);
-        message.setContent(content);
-        message.setTimestamp(LocalDateTime.now());
-
-        history.getMessages().add(message);
-        history.setUpdateTime(LocalDateTime.now());
+        ChatHistoryResponse history = sessionStore.computeIfAbsent(
+            sessionId, 
+            k -> {
+                ChatHistoryResponse h = new ChatHistoryResponse();
+                h.setSessionId(sessionId);
+                h.setMessages(new ArrayList<>());
+                h.setCreatedAt(LocalDateTime.now());
+                return h;
+            }
+        );
+        
+        ChatHistoryResponse.Message msg = new ChatHistoryResponse.Message();
+        msg.setRole(role);
+        msg.setContent(content);
+        msg.setTimestamp(LocalDateTime.now());
+        
+        history.getMessages().add(msg);
+        history.setUpdatedAt(LocalDateTime.now());
     }
 }

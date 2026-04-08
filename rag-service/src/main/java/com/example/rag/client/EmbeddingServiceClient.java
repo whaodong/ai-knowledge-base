@@ -22,7 +22,7 @@ import java.util.Map;
  * @author AI Knowledge Base Team
  * @since 1.0.0
  */
-@FeignClient(name = "embedding-service", path = "/api/embedding")
+@FeignClient(name = "embedding-service", path = "/api/v1/embeddings")
 public interface EmbeddingServiceClient {
 
     /**

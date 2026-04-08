@@ -13,29 +13,18 @@ import java.util.List;
 
 /**
  * 检索服务配置
- * 配置所有检索器、重排序器等组件
+ * 
+ * <p>配置检索器和重排序器的组合列表。</p>
+ * 
+ * <p>注意：VectorRetriever、KeywordRetriever、CrossEncoderReranker 
+ * 已通过 @Component 注解自动注册为 Bean，本类仅用于组合这些 Bean。</p>
  */
 @Configuration
 public class RetrievalConfig {
     
     /**
-     * 向量检索器Bean
-     */
-    @Bean
-    public VectorRetriever vectorRetriever() {
-        return new VectorRetriever(null); // VectorStore将在构造函数中注入
-    }
-    
-    /**
-     * 关键词检索器Bean
-     */
-    @Bean
-    public KeywordRetriever keywordRetriever() {
-        return new KeywordRetriever(null); // VectorStore将在构造函数中注入
-    }
-    
-    /**
      * 检索器列表
+     * 注入已由 @Component 注册的 VectorRetriever 和 KeywordRetriever
      */
     @Bean
     public List<Retriever> retrievers(VectorRetriever vectorRetriever, KeywordRetriever keywordRetriever) {
@@ -46,15 +35,8 @@ public class RetrievalConfig {
     }
     
     /**
-     * 重排序器Bean
-     */
-    @Bean
-    public CrossEncoderReranker crossEncoderReranker() {
-        return new CrossEncoderReranker(null); // EmbeddingModel将在构造函数中注入
-    }
-    
-    /**
      * 重排序器列表
+     * 注入已由 @Component 注册的 CrossEncoderReranker
      */
     @Bean
     public List<Reranker> rerankers(CrossEncoderReranker crossEncoderReranker) {
