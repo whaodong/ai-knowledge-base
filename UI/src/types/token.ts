@@ -1,44 +1,63 @@
-// Token统计响应
-export interface TokenUsageSummary {
+// Token统计相关类型
+
+// Token使用记录
+export interface TokenUsage {
+  id: string
+  username: string
+  serviceType: 'DOCUMENT' | 'EMBEDDING' | 'RAG' | 'SEARCH'
+  inputTokens: number
+  outputTokens: number
   totalTokens: number
-  promptTokens: number
-  completionTokens: number
-  requestCount: number
-  avgTokensPerRequest: number
-  estimatedCost: number
+  model: string
+  cost: number
+  createTime: string
 }
 
-// Token计数请求
-export interface TokenCountRequest {
-  text: string
-  model?: string
-}
-
-// Token计数响应
-export interface TokenCountResponse {
-  text: string
-  textLength: number
-  tokenCount: number
-  modelName: string
-  maxContextTokens: number
-  usagePercentage: string
-}
-
-// 会话Token统计
-export interface SessionTokenStats {
-  sessionId: string
+// Token统计汇总
+export interface TokenStatsSummary {
   totalTokens: number
-  promptTokens: number
-  completionTokens: number
-  messageCount: number
-  startTime: string
-  endTime?: string
+  inputTokens: number
+  outputTokens: number
+  totalCost: number
+  avgDailyTokens: number
+  peakDailyTokens: number
+  totalRequests: number
 }
 
-// Token使用趋势
-export interface TokenTrend {
+// Token使用趋势数据
+export interface TokenTrendData {
   date: string
   totalTokens: number
+  inputTokens: number
+  outputTokens: number
+  requestCount: number
+}
+
+// 服务类型统计
+export interface ServiceTokenStats {
+  serviceType: string
+  totalTokens: number
   requestCount: number
   avgTokensPerRequest: number
+  cost: number
+}
+
+// Token消耗Top10
+export interface TopTokenConsumer {
+  username: string
+  totalTokens: number
+  requestCount: number
+  avgTokensPerRequest: number
+}
+
+// 时间范围筛选
+export type TimeRange = 'today' | 'week' | 'month' | 'custom'
+
+// Token查询参数
+export interface TokenQueryParams {
+  timeRange: TimeRange
+  startDate?: string
+  endDate?: string
+  serviceType?: string
+  username?: string
 }

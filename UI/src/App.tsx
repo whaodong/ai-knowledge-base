@@ -10,6 +10,11 @@ import Documents from '@/pages/Documents'
 import Query from '@/pages/Query'
 import Monitoring from '@/pages/Monitoring'
 import Settings from '@/pages/Settings'
+import TokenStats from '@/pages/TokenStats'
+import EmbeddingTasks from '@/pages/EmbeddingTasks'
+import Vectors from '@/pages/Vectors'
+import Cache from '@/pages/Cache'
+import Users from '@/pages/Users'
 import { useAuthStore } from '@/stores/authStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 
@@ -45,6 +50,13 @@ function App() {
               <Route path="query" element={<Query />} />
               <Route path="monitoring" element={<Monitoring />} />
               <Route path="settings" element={<Settings />} />
+              {/* 阶段三：监控与统计 */}
+              <Route path="token-stats" element={<TokenStats />} />
+              <Route path="embedding-tasks" element={<EmbeddingTasks />} />
+              {/* 阶段四：高级功能 */}
+              <Route path="vectors" element={<Vectors />} />
+              <Route path="cache" element={<Cache />} />
+              <Route path="users" element={<Users />} />
             </Route>
           </Routes>
         </BrowserRouter>

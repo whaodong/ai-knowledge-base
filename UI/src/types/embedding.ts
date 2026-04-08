@@ -1,46 +1,58 @@
-// 向量化请求
-export interface EmbeddingRequest {
-  text: string
-  model?: string
-}
+// 向量化任务相关类型
 
-// 向量化响应
-export interface EmbeddingResponse {
-  taskId: string
-  text: string
-  embedding?: number[]
-  dimension?: number
-  model: string
-  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
+// 任务状态
+export type EmbeddingTaskStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
+
+// 向量化任务
+export interface EmbeddingTask {
+  id: string
+  documentId: number
+  documentName: string
+  status: EmbeddingTaskStatus
+  totalChunks: number
+  completedChunks: number
+  failedChunks: number
+  progress: number
+  inputTokens: number
+  outputTokens: number
+  startTime?: string
+  endTime?: string
+  createTime: string
   errorMessage?: string
-  duration?: number
+  retryCount: number
 }
 
-// 批量向量化请求
-export interface EmbeddingBatchRequest {
-  texts: EmbeddingRequest[]
-  model?: string
-}
-
-// 批量向量化响应
-export interface EmbeddingBatchResponse {
-  batchTaskId: string
-  total: number
-  successCount: number
-  failedCount: number
-  results: EmbeddingResponse[]
-}
-
-// 支持的模型
-export const EMBEDDING_MODELS = [
-  { value: 'text-embedding-v3', label: '通义千问 text-embedding-v3' },
-  { value: 'text-embedding-v2', label: '通义千问 text-embedding-v2' }
-]
-
-// 状态映射
-export const EMBEDDING_STATUS_MAP: Record<string, { text: string; color: string }> = {
+// 任务状态映射
+export const EMBEDDING_TASK_STATUS_MAP: Record<string, { text: string; color: string }> = {
   'PENDING': { text: '待处理', color: 'default' },
-  'PROCESSING': { text: '处理中', color: 'processing' },
+  'PROCESSING': { text: '进行中', color: 'processing' },
   'COMPLETED': { text: '已完成', color: 'success' },
-  'FAILED': { text: '失败', color: 'error' }
+  'FAILED': { text: '失败', color: 'error' },
+  'CANCELLED': { text: '已取消', color: 'warning' }
+}
+
+// 批量提交请求
+export interface BatchEmbeddingRequest {
+  documentIds: number[]
+  priority?: number
+}
+
+// 任务查询参数
+export interface EmbeddingTaskQueryParams {
+  pageNum: number
+  pageSize: number
+  status?: EmbeddingTaskStatus
+  documentName?: string
+  startDate?: string
+  endDate?: string
+}
+
+// 任务统计
+export interface EmbeddingTaskStats {
+  totalTasks: number
+  pendingTasks: number
+  processingTasks: number
+  completedTasks: number
+  failedTasks: number
+  avgProcessingTime: number
 }
