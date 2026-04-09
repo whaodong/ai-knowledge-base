@@ -11,16 +11,16 @@ const DocumentList = () => {
   const [pageSize, setPageSize] = useState(10)
   const [uploadOpen, setUploadOpen] = useState(false)
   
-  const { data, isLoading } = useDocuments({ page, page_size: pageSize })
+  const { data, isLoading } = useDocuments({ pageNum: page, pageSize, sortOrder: 'DESC' })
   const { delete: deleteDoc } = useDocumentMutations()
 
   const columns: ColumnsType<Document> = [
-    { title: '标题', dataIndex: 'title', key: 'title', ellipsis: true },
-    { title: '类型', dataIndex: 'file_type', key: 'file_type', width: 80, render: (t: string) => <Tag>{t.toUpperCase()}</Tag> },
+    { title: '标题', dataIndex: 'originalFileName', key: 'originalFileName', ellipsis: true },
+    { title: '类型', dataIndex: 'fileType', key: 'fileType', width: 80, render: (t: string) => <Tag>{String(t).toUpperCase()}</Tag> },
     { title: '状态', dataIndex: 'status', key: 'status', width: 100, render: (s: string) => {
-      const colors: Record<string, string> = { pending: 'default', processing: 'processing', completed: 'success', failed: 'error' }
-      const texts: Record<string, string> = { pending: '待处理', processing: '处理中', completed: '已完成', failed: '失败' }
-      return <Tag color={colors[s]}>{texts[s]}</Tag>
+      const colors: Record<string, string> = { UPLOADED: 'default', PROCESSING: 'processing', PARSED: 'cyan', EMBEDDED: 'success', FAILED: 'error', DELETED: 'warning' }
+      const texts: Record<string, string> = { UPLOADED: '已上传', PROCESSING: '处理中', PARSED: '已解析', EMBEDDED: '已向量化', FAILED: '失败', DELETED: '已删除' }
+      return <Tag color={colors[s] ?? 'default'}>{texts[s] ?? s}</Tag>
     }},
     { title: '操作', key: 'actions', width: 150, render: (_, record) => (
       <Space>
@@ -41,13 +41,13 @@ const DocumentList = () => {
       </div>
       <Table
         columns={columns}
-        dataSource={data?.items}
+        dataSource={data?.data.records}
         rowKey="id"
         loading={isLoading}
         pagination={{
           current: page,
           pageSize,
-          total: data?.total,
+          total: data?.data.total,
           onChange: (p, ps) => { setPage(p); setPageSize(ps) }
         }}
       />

@@ -1,9 +1,6 @@
 // 向量化任务相关类型
-
-// 任务状态
 export type EmbeddingTaskStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
 
-// 向量化任务
 export interface EmbeddingTask {
   id: string
   documentId: number
@@ -22,14 +19,53 @@ export interface EmbeddingTask {
   retryCount: number
 }
 
-// 任务状态映射
-export const EMBEDDING_TASK_STATUS_MAP: Record<string, { text: string; color: string }> = {
-  'PENDING': { text: '待处理', color: 'default' },
-  'PROCESSING': { text: '进行中', color: 'processing' },
-  'COMPLETED': { text: '已完成', color: 'success' },
-  'FAILED': { text: '失败', color: 'error' },
-  'CANCELLED': { text: '已取消', color: 'warning' }
+export interface EmbeddingRequest {
+  text: string
+  model?: string
+  documentId?: number
+  async?: boolean
 }
+
+export interface EmbeddingResponse {
+  taskId: string
+  text: string
+  embedding?: number[]
+  dimension?: number
+  model: string
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
+  errorMessage?: string
+  retryCount: number
+}
+
+export interface EmbeddingBatchRequest {
+  texts: EmbeddingRequest[]
+  model?: string
+  async?: boolean
+}
+
+export interface EmbeddingBatchResponse {
+  batchTaskId: string
+  total: number
+  successCount: number
+  failedCount: number
+  results: EmbeddingResponse[]
+}
+
+export const EMBEDDING_MODELS = [
+  { value: 'text-embedding-3-small', label: 'text-embedding-3-small' },
+  { value: 'text-embedding-v3', label: 'text-embedding-v3' }
+]
+
+export const EMBEDDING_STATUS_MAP: Record<string, { text: string; color: string }> = {
+  PENDING: { text: '待处理', color: 'default' },
+  PROCESSING: { text: '进行中', color: 'processing' },
+  COMPLETED: { text: '已完成', color: 'success' },
+  FAILED: { text: '失败', color: 'error' },
+  CANCELLED: { text: '已取消', color: 'warning' }
+}
+
+// 兼容旧页面命名
+export const EMBEDDING_TASK_STATUS_MAP = EMBEDDING_STATUS_MAP
 
 // 批量提交请求
 export interface BatchEmbeddingRequest {

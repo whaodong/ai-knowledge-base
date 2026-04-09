@@ -68,26 +68,17 @@ export enum ErrorCode {
   NOT_FOUND = 404,
   INTERNAL_SERVER_ERROR = 500,
   SERVICE_UNAVAILABLE = 503,
-  
-  // 文档服务错误 2xxx
   DOCUMENT_NOT_FOUND = 2001,
   DOCUMENT_UPLOAD_FAILED = 2002,
   DOCUMENT_PARSE_FAILED = 2003,
-  
-  // 向量化服务错误 3xxx
   EMBEDDING_GENERATION_FAILED = 3001,
   EMBEDDING_TASK_NOT_FOUND = 3002,
-  
-  // RAG服务错误 4xxx
   RAG_QUERY_FAILED = 4001,
   RAG_SESSION_NOT_FOUND = 4002,
-  
-  // Milvus服务错误 5xxx
   MILVUS_CONNECTION_FAILED = 5001,
   MILVUS_SEARCH_FAILED = 5004
 }
 
-// Re-export types from sub-modules
 export type { Document } from './document'
 export type { DocumentQueryParams, DocumentUploadRequest, DocumentBatchUploadResponse, DocumentChunk } from './document'
 export { FILE_TYPE_MAP, DOCUMENT_STATUS_MAP } from './document'
@@ -103,3 +94,10 @@ export type { CacheEntry, CacheStats, CacheType, CacheQueryParams, CacheWarmupRe
 
 export type { User as UserInfo, UserStatus, UserRole, UserQueryParams, CreateUserRequest, UpdateUserRequest, ChangePasswordRequest, BatchUserOperationRequest } from './user'
 export { USER_ROLE_MAP, USER_STATUS_MAP } from './user'
+
+// 新增模块导出（兼容新目录结构）
+export * from '@/types/common'
+export * from '@/types/auth'
+export * from '@/types/rag'
+export * from '@/types/token-stats'
+export * from '@/types/embedding-task'

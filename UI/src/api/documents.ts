@@ -36,5 +36,9 @@ export const documentsApi = {
 
   // 批量删除文档
   batchDeleteDocuments: (ids: number[]): Promise<Result<void>> =>
-    apiClient.delete('/api/v1/documents/batch', { data: ids })
+    apiClient.delete('/api/v1/documents/batch', { data: ids }),
+
+  // 健康检查
+  health: (): Promise<Record<string, unknown>> =>
+    apiClient.get('/api/v1/documents/health')
 }

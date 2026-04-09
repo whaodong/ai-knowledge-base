@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: embedding-service
+  main:
+    allow-bean-definition-overriding: true
   
   # 配置中心（可选）
   config:
@@ -29,7 +31,7 @@ spring:
   ai:
     openai:
       # 阿里云通义千问 OpenAI 兼容模式 endpoint
-      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
       # API Key（请替换为你的阿里云 API Key）
       api-key: sk-test-dashscope-api-key-123456
       chat:

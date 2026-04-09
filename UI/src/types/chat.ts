@@ -8,6 +8,14 @@ export interface Message {
   finished?: boolean
 }
 
+export interface ChatSession {
+  id: string
+  title: string
+  messages: Message[]
+  created_at: string
+  updated_at: string
+}
+
 // 引用来源（匹配后端 RetrievalResult）
 export interface Reference {
   documentId: string

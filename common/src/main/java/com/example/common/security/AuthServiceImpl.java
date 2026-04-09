@@ -1,16 +1,20 @@
 package com.example.common.security;
 
+import com.example.common.enums.ErrorCode;
+import com.example.common.exception.BusinessException;
 import com.example.common.security.dto.AuthResponse;
 import com.example.common.security.dto.LoginRequest;
 import com.example.common.security.dto.RefreshTokenRequest;
 import com.example.common.security.dto.RegisterRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -28,6 +32,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtConfig jwtConfig;
     private final PasswordEncoder passwordEncoder;
     private final CustomUserDetailsService userDetailsService;
+    private final ObjectProvider<UserPersistenceService> userPersistenceServiceProvider;
     
     @Override
     public AuthResponse login(LoginRequest request) {
@@ -55,12 +60,21 @@ public class AuthServiceImpl implements AuthService {
     
     @Override
     public AuthResponse register(RegisterRequest request) {
-        // 检查用户名是否已存在
-        try {
-            userDetailsService.loadUserByUsername(request.getUsername());
-            throw new RuntimeException("用户名已存在");
-        } catch (Exception e) {
-            // 用户不存在，可以注册
+        UserPersistenceService userPersistenceService = userPersistenceServiceProvider.getIfAvailable();
+
+        // 优先使用持久化层做唯一性判断，避免通过异常控制流程
+        if (userPersistenceService != null && userPersistenceService.existsByUsername(request.getUsername())) {
+            throw new BusinessException(ErrorCode.CONFLICT, "用户名已存在");
+        }
+
+        // 回退到UserDetailsService实现（兼容无持久化层场景）
+        if (userPersistenceService == null) {
+            try {
+                userDetailsService.loadUserByUsername(request.getUsername());
+                throw new BusinessException(ErrorCode.CONFLICT, "用户名已存在");
+            } catch (UsernameNotFoundException e) {
+                // 用户不存在，可以注册
+            }
         }
         
         // 创建用户（默认为VIEWER角色）
@@ -73,8 +87,8 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         
-        // 保存用户（由具体服务实现）
-        // 这里需要子模块实现保存逻辑
+        // 保存用户（默认实现保存到内存；自定义实现可在各子模块接管）
+        saveUser(user, userPersistenceService);
         
         // 生成Token
         String accessToken = jwtTokenProvider.generateToken(user.getUsername(), 
@@ -98,7 +112,7 @@ public class AuthServiceImpl implements AuthService {
         // 验证刷新Token
         if (!jwtTokenProvider.validateToken(refreshToken) || 
             !jwtTokenProvider.isRefreshToken(refreshToken)) {
-            throw new RuntimeException("无效的刷新Token");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, "无效的刷新Token");
         }
         
         // 获取用户名
@@ -146,5 +160,21 @@ public class AuthServiceImpl implements AuthService {
             return (User) authentication.getPrincipal();
         }
         return null;
+    }
+
+    /**
+     * 保存用户信息。
+     *
+     * @param user 用户对象
+     * @param userPersistenceService 用户持久化服务
+     */
+    private void saveUser(User user, UserPersistenceService userPersistenceService) {
+        if (userPersistenceService != null) {
+            userPersistenceService.saveUser(user);
+            return;
+        }
+        if (userDetailsService instanceof UserPersistenceService localPersistenceService) {
+            localPersistenceService.saveUser(user);
+        }
     }
 }

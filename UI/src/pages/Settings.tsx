@@ -41,7 +41,7 @@ const Settings = () => {
             rerankEnabled: ragConfig.rerankEnabled,
             embeddingModel: ragConfig.embeddingModel
           }}
-          onValuesChange={(changed, values) => setRagConfig(values)}
+          onValuesChange={(_changed, values) => setRagConfig(values)}
         >
           <Form.Item label="检索数量 (Top K)" name="topK">
             <InputNumber min={1} max={50} style={{ width: 200 }} />
@@ -70,7 +70,7 @@ const Settings = () => {
         <Form layout="vertical">
           <Form.Item label="API 地址">
             <Input 
-              value={import.meta.env.VITE_API_URL || 'http://localhost:8080'} 
+              value={import.meta.env.VITE_API_URL || '/api'} 
               disabled 
               style={{ width: 400 }} 
             />

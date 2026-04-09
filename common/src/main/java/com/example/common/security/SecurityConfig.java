@@ -1,6 +1,7 @@
 package com.example.common.security;
 
 import lombok.RequiredArgsConstructor;
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -55,6 +56,9 @@ public class SecurityConfig {
                 
                 // 配置请求授权
                 .authorizeHttpRequests(auth -> auth
+                        // 放行异步与错误分发，避免SSE/异步请求在二次分发阶段被误拦截
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
+
                         // 公开接口
                         .requestMatchers(
                                 "/api/auth/**",

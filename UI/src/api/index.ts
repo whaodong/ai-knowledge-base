@@ -1,20 +1,19 @@
-// API Client
 export { default as apiClient } from './client'
-
-// Documents API
+export { authApi } from './auth'
 export { documentsApi } from './documents'
+export { ragApi } from './rag'
+export { monitoringApi } from './monitoring'
 
-// Token Stats API
-export { tokenApi } from './token'
-
-// Embedding Tasks API
+export { embeddingsApi } from './embeddings'
 export { embeddingApi } from './embedding'
+export { tokensApi } from './tokens'
+export { tokenApi } from './token'
+export { tokenStatsApi } from './token-stats'
 
-// Vector API
+export { milvusApi } from './milvus'
 export { vectorApi } from './vector'
+export { vectorsApi } from './vectors'
 
-// Cache API
 export { cacheApi } from './cache'
-
-// User API
 export { userApi } from './user'
+export { usersApi } from './users'

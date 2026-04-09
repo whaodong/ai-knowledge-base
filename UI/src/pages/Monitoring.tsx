@@ -1,9 +1,7 @@
-import { Row, Col, Card, Statistic, Table, Typography } from 'antd'
+import { Row, Col, Card, Statistic, Table } from 'antd'
 import { FileTextOutlined, MessageOutlined, ThunderboltOutlined, ClockCircleOutlined } from '@ant-design/icons'
 import ReactECharts from 'echarts-for-react'
-import { useState, useEffect } from 'react'
-
-const { Title } = Typography
+import { useState } from 'react'
 
 interface ServiceHealth {
   service: string
@@ -13,7 +11,7 @@ interface ServiceHealth {
 }
 
 const Monitoring = () => {
-  const [services, setServices] = useState<ServiceHealth[]>([
+  const [services] = useState<ServiceHealth[]>([
     { service: 'document-service', status: 'UP', port: 8081, responseTime: 45 },
     { service: 'embedding-service', status: 'UP', port: 8082, responseTime: 120 },
     { service: 'rag-service', status: 'UP', port: 8083, responseTime: 85 },

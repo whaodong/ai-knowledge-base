@@ -69,7 +69,6 @@
         <dependency>
             <groupId>com.knuddels</groupId>
             <artifactId>jtokkit</artifactId>
-            <version>1.0.0</version>
         </dependency>
         
         <!-- JSON处理 -->

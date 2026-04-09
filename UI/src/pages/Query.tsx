@@ -11,14 +11,13 @@ import dayjs from 'dayjs'
 import { v4 as uuidv4 } from 'uuid'
 
 const { TextArea } = Input
-const { Text, Paragraph } = Typography
+const { Text } = Typography
 
 const Query = () => {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [historyVisible, setHistoryVisible] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const eventSourceRef = useRef<EventSource | null>(null)
   
   const { 
     messages, 
@@ -63,7 +62,13 @@ const Query = () => {
     addMessage(aiMessage)
 
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+      const rawApiBaseURL = import.meta.env.VITE_API_URL
+      const isLocalGateway =
+        rawApiBaseURL === 'http://localhost:8080' ||
+        rawApiBaseURL === 'http://127.0.0.1:8080'
+      const baseUrl = import.meta.env.DEV && (!rawApiBaseURL || isLocalGateway)
+        ? ''
+        : (rawApiBaseURL || '')
       const url = `${baseUrl}/api/v1/rag/chat`
       
       // 使用 fetch 发送 POST 请求，接收 SSE 响应
@@ -92,9 +97,13 @@ const Query = () => {
 
       let buffer = ''
 
-      while (true) {
+      let finished = false
+      while (!finished) {
         const { done, value } = await reader.read()
-        if (done) break
+        if (done) {
+          finished = true
+          continue
+        }
 
         buffer += decoder.decode(value, { stream: true })
         const lines = buffer.split('\n')
@@ -142,7 +151,7 @@ const Query = () => {
           dataSource={references}
           renderItem={(ref, index) => (
             <List.Item className="text-sm">
-              <Text ellipsis={{ rows: 2 }} style={{ maxWidth: '100%' }}>
+              <Text ellipsis style={{ maxWidth: '100%' }}>
                 [{index + 1}] {ref.content} (相关度: {(ref.score * 100).toFixed(1)}%)
               </Text>
             </List.Item>
@@ -168,12 +177,16 @@ const Query = () => {
                     <Text className="text-white">{msg.content}</Text>
                   ) : (
                     <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[rehypeHighlight]}
-                      >
-                        {msg.content || <Spin size="small" />}
-                      </ReactMarkdown>
+                      {msg.content ? (
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          rehypePlugins={[rehypeHighlight]}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      ) : (
+                        <Spin size="small" />
+                      )}
                       {msg.finished && renderReferences(msg.references)}
                     </div>
                   )}

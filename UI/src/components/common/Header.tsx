@@ -6,7 +6,7 @@ const { Header: AntHeader } = Layout
 const { Text } = Typography
 
 const Header = () => {
-  const { user } = useAuthStore()
+  useAuthStore()
 
   return (
     <AntHeader className="bg-white shadow-sm px-6 flex items-center justify-between">

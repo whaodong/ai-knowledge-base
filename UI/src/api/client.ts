@@ -1,8 +1,16 @@
 import axios, { AxiosError } from 'axios'
 import type { Result } from '@/types/api'
 
+const rawApiBaseURL = import.meta.env.VITE_API_URL
+const isLocalGateway =
+  rawApiBaseURL === 'http://localhost:8080' ||
+  rawApiBaseURL === 'http://127.0.0.1:8080'
+const apiBaseURL = import.meta.env.DEV && (!rawApiBaseURL || isLocalGateway)
+  ? ''
+  : (rawApiBaseURL || '')
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+  baseURL: apiBaseURL,
   timeout: 60000,
   headers: { 'Content-Type': 'application/json' }
 })
@@ -30,7 +38,7 @@ apiClient.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken')
       if (refreshToken) {
         try {
-          const res = await axios.post('/api/auth/refresh', { refreshToken })
+          const res = await axios.post(`${apiBaseURL}/api/auth/refresh`, { refreshToken })
           const { accessToken } = res.data.data
           localStorage.setItem('accessToken', accessToken)
           if (error.config) {

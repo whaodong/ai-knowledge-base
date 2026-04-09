@@ -53,6 +53,26 @@ services:
     networks:
       - ai-network
 
+  # PostgreSQL认证数据库
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=ai_knowledge_base
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_knowledge_base"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai-network
+
   # Milvus向量数据库
   etcd:
     image: quay.io/coreos/etcd:v3.5.5
@@ -196,6 +216,9 @@ services:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
       - MILVUS_HOST=milvus
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AUTH_DB_URL=jdbc:postgresql://postgres:5432/ai_knowledge_base
+      - AUTH_DB_USERNAME=postgres
+      - AUTH_DB_PASSWORD=postgres
       - JAVA_OPTS=-Xms1g -Xmx2g
     depends_on:
       eureka-server:
@@ -203,6 +226,8 @@ services:
       redis:
         condition: service_healthy
       milvus:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     networks:
       - ai-network
@@ -212,6 +237,7 @@ volumes:
   etcd_data:
   minio_data:
   milvus_data:
+  postgres_data:
 
 networks:
   ai-network:

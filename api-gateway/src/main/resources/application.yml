@@ -18,6 +18,96 @@ spring:
       
       # 路由配置
       routes:
+        # 前端直连文档服务路由（兼容/api/v1前缀）
+        - id: document-service-api-v1
+          uri: lb://document-service
+          predicates:
+            - Path=/api/v1/documents/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+
+        # 前端直连向量化服务路由（兼容/api/v1前缀）
+        - id: embedding-service-api-v1
+          uri: lb://embedding-service
+          predicates:
+            - Path=/api/v1/embeddings/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+
+        # 前端直连RAG服务路由（兼容/api/v1前缀）
+        - id: rag-service-api-v1
+          uri: lb://rag-service
+          predicates:
+            - Path=/api/v1/rag/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+
+        # 前端直连Token服务路由（兼容/api/v1前缀）
+        - id: token-service-api-v1
+          uri: lb://rag-service
+          predicates:
+            - Path=/api/v1/tokens/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+
+        # 前端直连向量检索服务路由（兼容/api/v1前缀）
+        - id: milvus-service-api-v1
+          uri: lb://milvus-service
+          predicates:
+            - Path=/api/v1/vectors/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+
+        # 前端直连索引管理服务路由（兼容/api前缀）
+        - id: milvus-index-api
+          uri: lb://milvus-service
+          predicates:
+            - Path=/api/index/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+
         # 文档服务路由
         - id: document-service
           uri: lb://document-service
@@ -68,6 +158,21 @@ spring:
               args:
                 enabled: true
                 require-auth: true
+
+        # 认证接口路由（透传到RAG服务中公共认证控制器）
+        - id: auth-service
+          uri: lb://rag-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: false
         
         # 配置中心路由（直接访问）
         - id: config-server

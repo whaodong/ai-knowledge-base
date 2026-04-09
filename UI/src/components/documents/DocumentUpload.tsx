@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Modal, Upload, Button, message } from 'antd'
 import { InboxOutlined } from '@ant-design/icons'
 import { useDocumentMutations } from '@/hooks/useDocuments'
+import type { UploadFile } from 'antd/es/upload/interface'
 
 const { Dragger } = Upload
 
@@ -11,7 +12,7 @@ interface Props {
 }
 
 const DocumentUpload = ({ open, onClose }: Props) => {
-  const [fileList, setFileList] = useState<File[]>([])
+  const [fileList, setFileList] = useState<UploadFile[]>([])
   const { upload, isUploading } = useDocumentMutations()
 
   const handleUpload = async () => {
@@ -19,8 +20,10 @@ const DocumentUpload = ({ open, onClose }: Props) => {
       message.warning('请选择文件')
       return
     }
-    for (const file of fileList) {
-      upload({ file })
+    for (const item of fileList) {
+      if (item.originFileObj) {
+        upload({ file: item.originFileObj })
+      }
     }
     setFileList([])
     onClose()
@@ -38,15 +41,12 @@ const DocumentUpload = ({ open, onClose }: Props) => {
     >
       <Dragger
         beforeUpload={(file) => {
-          setFileList([...fileList, file])
+          setFileList((prev) => [...prev, file as UploadFile])
           return false
         }}
-        fileList={fileList as unknown as any[]}
+        fileList={fileList}
         onRemove={(file) => {
-          const index = fileList.indexOf(file as unknown as File)
-          const newFileList = fileList.slice()
-          newFileList.splice(index, 1)
-          setFileList(newFileList)
+          setFileList((prev) => prev.filter((item) => item.uid !== file.uid))
         }}
       >
         <p className="ant-upload-drag-icon"><InboxOutlined /></p>

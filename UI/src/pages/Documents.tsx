@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Table, Card, Button, Upload, Space, Tag, Modal, message, Popconfirm, Input, Select } from 'antd'
 import { UploadOutlined, DeleteOutlined, EyeOutlined, ReloadOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -23,7 +23,7 @@ const Documents = () => {
   const [uploading, setUploading] = useState(false)
 
   // 加载文档列表
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     setLoading(true)
     try {
       const res = await documentsApi.getDocuments(params)
@@ -36,11 +36,11 @@ const Documents = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [params])
 
   useEffect(() => {
     loadDocuments()
-  }, [params])
+  }, [loadDocuments])
 
   // 上传文档
   const handleUpload = async () => {

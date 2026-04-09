@@ -14,6 +14,90 @@ spring:
       
       # 路由配置（可从配置中心动态更新）
       routes:
+        - id: document-service-api-v1
+          uri: lb://document-service
+          predicates:
+            - Path=/api/v1/documents/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+
+        - id: embedding-service-api-v1
+          uri: lb://embedding-service
+          predicates:
+            - Path=/api/v1/embeddings/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+
+        - id: rag-service-api-v1
+          uri: lb://rag-service
+          predicates:
+            - Path=/api/v1/rag/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+
+        - id: token-service-api-v1
+          uri: lb://rag-service
+          predicates:
+            - Path=/api/v1/tokens/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+
+        - id: milvus-service-api-v1
+          uri: lb://milvus-service
+          predicates:
+            - Path=/api/v1/vectors/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+
+        - id: milvus-index-api
+          uri: lb://milvus-service
+          predicates:
+            - Path=/api/index/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: true
+
         - id: document-service
           uri: lb://document-service
           predicates:
@@ -58,6 +142,20 @@ spring:
               args:
                 enabled: true
                 require-auth: true
+
+        - id: auth-service
+          uri: lb://rag-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - name: RequestLoggingFilter
+              args:
+                enabled: true
+                log-headers: false
+            - name: AuthenticationFilter
+              args:
+                enabled: true
+                require-auth: false
       
       # HTTP客户端配置
       httpclient:

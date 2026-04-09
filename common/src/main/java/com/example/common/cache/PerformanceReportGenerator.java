@@ -3,6 +3,7 @@ package com.example.common.cache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedWriter;
@@ -26,7 +27,7 @@ import java.util.Map;
 @ConditionalOnBean(PerformanceTestService.class)
 public class PerformanceReportGenerator {
 
-    private final PerformanceTestService performanceTestService;
+    private final ObjectProvider<PerformanceTestService> performanceTestServiceProvider;
     
     private static final String REPORT_DIR = "outputs/reports/performance";
     private static final DateTimeFormatter DATE_FORMATTER = 
@@ -37,6 +38,11 @@ public class PerformanceReportGenerator {
      */
     public String generateFullReport() {
         log.info("开始生成性能测试报告...");
+
+        PerformanceTestService performanceTestService = performanceTestServiceProvider.getIfAvailable();
+        if (performanceTestService == null) {
+            throw new IllegalStateException("PerformanceTestService不可用，无法生成性能测试报告");
+        }
         
         try {
             // 确保报告目录存在

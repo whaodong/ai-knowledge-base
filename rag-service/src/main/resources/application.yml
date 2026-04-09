@@ -22,7 +22,7 @@ spring:
   ai:
     # Spring AI 通义千问配置（OpenAI兼容模式）
     openai:
-      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
       api-key: sk-test-dashscope-api-key-123456
       chat:
         options:
@@ -71,6 +71,21 @@ spring:
       model-name: qwen-plus
       temperature: 0.7
       max-tokens: 2000
+
+  # PostgreSQL认证用户持久化配置
+  datasource:
+    url: ${AUTH_DB_URL:jdbc:postgresql://localhost:5432/ai_knowledge_base}
+    username: ${AUTH_DB_USERNAME:postgres}
+    password: ${AUTH_DB_PASSWORD:123456}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   zipkin:
     base-url: http://localhost:9411

@@ -11,8 +11,12 @@ export const useAuth = () => {
 
   const loginMutation = useMutation({
     mutationFn: (data: LoginRequest) => authApi.login(data),
-    onSuccess: (data) => {
-      login(data.user, data.token)
+    onSuccess: (res) => {
+      login(
+        { username: res.data.username, role: res.data.role },
+        res.data.accessToken,
+        res.data.refreshToken
+      )
       message.success('登录成功')
       navigate('/documents')
     },

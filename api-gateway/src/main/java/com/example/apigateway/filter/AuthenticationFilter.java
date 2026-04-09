@@ -9,6 +9,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.core.Ordered;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,8 +33,9 @@ import java.util.List;
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
 
-    /** JWT密钥（生产环境应从配置中心获取） */
-    private static final String JWT_SECRET = "your-secret-key-should-be-at-least-32-characters-long";
+    /** 默认JWT密钥（与common模块保持一致） */
+    private static final String DEFAULT_JWT_SECRET =
+            "ai-knowledge-base-default-secret-key-must-be-at-least-256-bits-long";
     
     /** 白名单路径（不需要认证的路径） */
     private static final List<String> WHITELIST_PATHS = Arrays.asList(
@@ -45,13 +48,17 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             "/eureka"
     );
 
+    @Value("${jwt.secret:" + DEFAULT_JWT_SECRET + "}")
+    private String jwtSecret;
+
     public AuthenticationFilter() {
         super(Config.class);
     }
 
     @Override
     public GatewayFilter apply(Config config) {
-        return new InnerFilter(config);
+        String effectiveSecret = StringUtils.hasText(config.getJwtSecret()) ? config.getJwtSecret() : jwtSecret;
+        return new InnerFilter(config, effectiveSecret);
     }
 
     private static class InnerFilter implements GatewayFilter, Ordered {
@@ -59,9 +66,10 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         private final Config config;
         private final SecretKey secretKey;
         
-        public InnerFilter(Config config) {
+        public InnerFilter(Config config, String jwtSecret) {
             this.config = config;
-            this.secretKey = Keys.hmacShaKeyFor(JWT_SECRET.getBytes(StandardCharsets.UTF_8));
+            byte[] keyBytes = Base64.getEncoder().encode(jwtSecret.getBytes(StandardCharsets.UTF_8));
+            this.secretKey = Keys.hmacShaKeyFor(keyBytes);
         }
 
         @Override
@@ -115,7 +123,8 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 // 提取用户信息并添加到请求头
                 String username = claims.getSubject();
                 String userId = claims.get("userId", String.class);
-                String roles = claims.get("roles", String.class);
+                Object rolesClaim = claims.get("roles");
+                String roles = rolesClaim != null ? rolesClaim.toString() : "";
                 
                 if (log.isDebugEnabled()) {
                     log.debug("[Authentication Success] User: {}, Path: {}", username, path);

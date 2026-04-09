@@ -1,6 +1,7 @@
 import apiClient from './client'
 import type { Result } from '@/types/api'
-import type { LoginRequest, AuthResponse, RegisterRequest, User } from '@/types/api'
+import type { User } from '@/types/api'
+import type { LoginRequest, AuthResponse, RegisterRequest } from '@/types/auth'
 
 export const authApi = {
   // 登录

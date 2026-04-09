@@ -24,7 +24,7 @@ export const useDocumentMutations = () => {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => documentsApi.deleteDocument(id),
+    mutationFn: (id: number) => documentsApi.deleteDocument(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] })
       message.success('删除成功')

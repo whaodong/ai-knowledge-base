@@ -136,6 +136,7 @@ public class RagController {
                 if (sessionId == null || sessionId.isEmpty()) {
                     sessionId = UUID.randomUUID().toString();
                 }
+                final String finalSessionId = sessionId;
 
                 // 1. RAG 检索获取相关文档
                 RagRequest ragRequest = RagRequest.builder()
@@ -159,7 +160,7 @@ public class RagController {
                 
                 Flux<String> responseFlux = chatClient.prompt()
                         .user(request.getMessage())
-                        .call()
+                        .stream()
                         .content();
                 
                 // 4. 流式输出
@@ -169,7 +170,7 @@ public class RagController {
                             fullReply.append(chunk);
                             
                             ChatResponse chatChunk = new ChatResponse();
-                            chatChunk.setSessionId(sessionId);
+                            chatChunk.setSessionId(finalSessionId);
                             chatChunk.setReply(fullReply.toString());
                             chatChunk.setFinished(false);
                             chatChunk.setTimestamp(LocalDateTime.now());
@@ -183,13 +184,27 @@ public class RagController {
                     },
                     error -> {
                         log.error("流式对话失败", error);
-                        emitter.completeWithError(error);
+                        try {
+                            ChatResponse fallbackResponse = new ChatResponse();
+                            fallbackResponse.setSessionId(finalSessionId);
+                            fallbackResponse.setReply(buildFallbackAnswer(request.getMessage()));
+                            fallbackResponse.setFinished(true);
+                            fallbackResponse.setTimestamp(LocalDateTime.now());
+
+                            emitter.send(SseEmitter.event()
+                                    .name("done")
+                                    .data(fallbackResponse));
+                            emitter.complete();
+                        } catch (IOException ioException) {
+                            log.error("发送兜底响应失败", ioException);
+                            emitter.completeWithError(error);
+                        }
                     },
                     () -> {
                         try {
                             // 发送完成事件
                             ChatResponse finalResponse = new ChatResponse();
-                            finalResponse.setSessionId(sessionId);
+                            finalResponse.setSessionId(finalSessionId);
                             finalResponse.setReply(fullReply.toString());
                             finalResponse.setFinished(true);
                             finalResponse.setTimestamp(LocalDateTime.now());
@@ -200,11 +215,11 @@ public class RagController {
                             emitter.complete();
 
                             // 保存会话历史
-                            saveMessage(sessionId, "user", request.getMessage());
-                            saveMessage(sessionId, "assistant", fullReply.toString());
+                            saveMessage(finalSessionId, "user", request.getMessage());
+                            saveMessage(finalSessionId, "assistant", fullReply.toString());
                             
                             log.info("RAG对话完成，sessionId: {}, 回复长度: {}", 
-                                    sessionId, fullReply.length());
+                                    finalSessionId, fullReply.length());
                         } catch (IOException e) {
                             log.error("发送完成事件失败", e);
                         }
@@ -213,11 +228,35 @@ public class RagController {
 
             } catch (Exception e) {
                 log.error("流式对话异常", e);
-                emitter.completeWithError(e);
+                try {
+                    ChatResponse fallbackResponse = new ChatResponse();
+                    fallbackResponse.setSessionId(request.getSessionId());
+                    fallbackResponse.setReply(buildFallbackAnswer(request.getMessage()));
+                    fallbackResponse.setFinished(true);
+                    fallbackResponse.setTimestamp(LocalDateTime.now());
+
+                    emitter.send(SseEmitter.event()
+                            .name("done")
+                            .data(fallbackResponse));
+                    emitter.complete();
+                } catch (IOException ioException) {
+                    log.error("发送异常兜底响应失败", ioException);
+                    emitter.completeWithError(e);
+                }
             }
         }).start();
 
         return emitter;
+    }
+
+    /**
+     * 构建流式对话兜底答案。
+     *
+     * @param userMessage 用户问题
+     * @return 兜底回复
+     */
+    private String buildFallbackAnswer(String userMessage) {
+        return "当前大模型服务暂时不可用，已记录你的问题：\"" + userMessage + "\"。请稍后重试。";
     }
     
     /**
@@ -238,7 +277,7 @@ public class RagController {
             context.append(String.format("[文档%d] (来源: %s, 相关度: %.2f)\n%s\n\n",
                     i + 1,
                     doc.getDocumentId() != null ? doc.getDocumentId() : "未知",
-                    doc.getScore() != null ? doc.getScore() : 0.0,
+                    doc.getRerankScore(),
                     doc.getContent() != null ? doc.getContent() : ""));
         }
         
@@ -346,7 +385,6 @@ public class RagController {
         RagResponse response = RagResponse.builder()
                 .success(false)
                 .errorMessage("服务暂时不可用，请稍后重试")
-                .query(request.getQuery())
                 .build();
         
         return ResponseEntity.ok(Result.fail(503, "服务降级", response));
@@ -362,7 +400,7 @@ public class RagController {
                 ChatHistoryResponse h = new ChatHistoryResponse();
                 h.setSessionId(sessionId);
                 h.setMessages(new ArrayList<>());
-                h.setCreatedAt(LocalDateTime.now());
+                h.setCreateTime(LocalDateTime.now());
                 return h;
             }
         );
@@ -373,6 +411,6 @@ public class RagController {
         msg.setTimestamp(LocalDateTime.now());
         
         history.getMessages().add(msg);
-        history.setUpdatedAt(LocalDateTime.now());
+        history.setUpdateTime(LocalDateTime.now());
     }
 }

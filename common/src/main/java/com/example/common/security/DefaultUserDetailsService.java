@@ -1,6 +1,7 @@
 package com.example.common.security;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -12,7 +13,7 @@ import java.util.Set;
  * 实际项目中应该从数据库加载用户信息
  */
 @Service
-public class DefaultUserDetailsService implements CustomUserDetailsService {
+public class DefaultUserDetailsService implements CustomUserDetailsService, UserPersistenceService {
     
     private final Map<String, User> users = new HashMap<>();
     
@@ -49,11 +50,17 @@ public class DefaultUserDetailsService implements CustomUserDetailsService {
         users.put("viewer", viewer);
     }
     
+    /**
+     * 根据用户名加载用户信息。
+     *
+     * @param username 用户名
+     * @return 用户信息
+     */
     @Override
     public User loadUserByUsername(String username) {
         User user = users.get(username);
         if (user == null) {
-            throw new RuntimeException("用户不存在: " + username);
+            throw new UsernameNotFoundException("用户不存在: " + username);
         }
         return user;
     }
@@ -63,6 +70,27 @@ public class DefaultUserDetailsService implements CustomUserDetailsService {
      */
     public void addUser(User user) {
         users.put(user.getUsername(), user);
+    }
+
+    /**
+     * 保存用户信息。
+     *
+     * @param user 用户对象
+     */
+    @Override
+    public void saveUser(User user) {
+        addUser(user);
+    }
+
+    /**
+     * 根据用户名判断用户是否已存在。
+     *
+     * @param username 用户名
+     * @return 存在返回true，否则返回false
+     */
+    @Override
+    public boolean existsByUsername(String username) {
+        return users.containsKey(username);
     }
     
     /**

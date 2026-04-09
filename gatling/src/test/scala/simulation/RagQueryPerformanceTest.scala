@@ -3,6 +3,7 @@ package simulation
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import scala.concurrent.duration._
+import scala.util.Random
 
 class RagQueryPerformanceTest extends Simulation {
   
@@ -22,7 +23,7 @@ class RagQueryPerformanceTest extends Simulation {
   val scn = scenario("RAG Query Load Test")
     .exec(http("rag_query")
       .post("/api/v1/rag/query")
-      .body(StringBody(questions(random.nextInt(questions.length))))
+      .body(StringBody(questions(Random.nextInt(questions.length))))
       .asJson
       .check(status.is(200))
       .check(responseTimeInMillis.lte(3000))
@@ -31,8 +32,8 @@ class RagQueryPerformanceTest extends Simulation {
 
   setUp(
     scn.inject(
-      constantUsersPerSec(10) during (60 seconds),
-      rampUsersPerSec(10) to 100 during (120 seconds)
+      constantUsersPerSec(10).during(60.seconds),
+      rampUsersPerSec(10).to(100).during(120.seconds)
     )
   ).protocols(httpProtocol)
     .assertions(
@@ -41,5 +42,5 @@ class RagQueryPerformanceTest extends Simulation {
       global.successfulRequests.percent.gt(95),
       global.requestsPerSec.gt(50)
     )
-    .maxDuration(300 seconds)
+    .maxDuration(300.seconds)
 }

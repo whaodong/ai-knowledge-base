@@ -76,7 +76,7 @@ yarn install
 创建 `.env` 文件：
 
 ```env
-VITE_API_URL=http://localhost:8080
+VITE_API_URL=/api
 ```
 
 ## 🚀 启动
