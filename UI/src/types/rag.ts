@@ -48,3 +48,12 @@ export interface ChatHistoryResponse {
   createTime: string
   updateTime: string
 }
+
+// 流式响应数据类型
+export interface StreamingChunk {
+  type?: 'content' | 'reference' | 'done' | 'error'
+  content?: string
+  finished?: boolean
+  references?: RetrievalResult[]
+  error?: string
+}

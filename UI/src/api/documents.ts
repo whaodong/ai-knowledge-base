@@ -1,6 +1,6 @@
 import apiClient from './client'
 import type { Result, PageResponse } from '@/types/api'
-import type { Document, DocumentQueryParams, DocumentBatchUploadResponse } from '@/types/document'
+import type { Document, DocumentQueryParams, DocumentBatchUploadResponse, DocumentChunk } from '@/types/document'
 
 export const documentsApi = {
   // 获取文档列表（分页）
@@ -29,6 +29,10 @@ export const documentsApi = {
   // 获取文档详情
   getDocument: (id: number): Promise<Result<Document>> =>
     apiClient.get(`/api/v1/documents/${id}`),
+
+  // 获取文档分块列表
+  getDocumentChunks: (id: number): Promise<Result<DocumentChunk[]>> =>
+    apiClient.get(`/api/v1/documents/${id}/chunks`),
 
   // 删除文档
   deleteDocument: (id: number): Promise<Result<void>> =>
