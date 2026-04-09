@@ -1,21 +1,10 @@
-import { Layout as AntLayout } from 'antd'
 import { Outlet } from 'react-router-dom'
-import Header from './Header'
-import Sidebar from './Sidebar'
-
-const { Content } = AntLayout
 
 const Layout = () => {
   return (
-    <AntLayout className="min-h-screen">
-      <Sidebar />
-      <AntLayout>
-        <Header />
-        <Content className="p-6 bg-gray-50 overflow-auto">
-          <Outlet />
-        </Content>
-      </AntLayout>
-    </AntLayout>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Outlet />
+    </div>
   )
 }
 

@@ -54,3 +54,14 @@ export const DOCUMENT_STATUS_MAP: Record<string, { text: string; color: string }
   'FAILED': { text: '失败', color: 'error' },
   'DELETED': { text: '已删除', color: 'warning' }
 }
+
+// 文档分块
+export interface DocumentChunk {
+  id: string
+  documentId: number
+  content: string
+  chunkIndex: number
+  tokenCount?: number
+  metadata?: Record<string, unknown>
+  createdAt: string
+}

@@ -1,25 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Row, Col, Card, Statistic, Table, Select, DatePicker, Typography, Space } from 'antd'
-import {
-  ThunderboltOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-  LineChartOutlined,
-  PieChartOutlined
-} from '@ant-design/icons'
-import ReactECharts from 'echarts-for-react'
-import { tokenApi } from '@/api/token'
-import type {
-  TokenStatsSummary,
-  TokenTrendData,
-  ServiceTokenStats,
-  TopTokenConsumer,
-  TimeRange
-} from '@/types/token'
-import dayjs from 'dayjs'
-
-const { Title, Text } = Typography
-const { RangePicker } = DatePicker
+import { useState } from 'react'
+import type { TokenStatsSummary, TokenTrendData, ServiceTokenStats, TopTokenConsumer, TimeRange } from '@/types/token'
 
 // 模拟数据
 const mockSummary: TokenStatsSummary = {
@@ -54,245 +34,129 @@ const mockTopConsumers: TopTokenConsumer[] = [
   { username: 'user001', totalTokens: 198234, requestCount: 654, avgTokensPerRequest: 303 },
   { username: 'user002', totalTokens: 167890, requestCount: 523, avgTokensPerRequest: 321 },
   { username: 'user003', totalTokens: 145678, requestCount: 456, avgTokensPerRequest: 319 },
-  { username: 'user004', totalTokens: 123456, requestCount: 389, avgTokensPerRequest: 317 },
-  { username: 'user005', totalTokens: 98765, requestCount: 312, avgTokensPerRequest: 316 },
-  { username: 'user006', totalTokens: 87654, requestCount: 287, avgTokensPerRequest: 305 },
-  { username: 'user007', totalTokens: 76543, requestCount: 234, avgTokensPerRequest: 327 },
-  { username: 'user008', totalTokens: 65432, requestCount: 198, avgTokensPerRequest: 330 },
-  { username: 'user009', totalTokens: 54321, requestCount: 167, avgTokensPerRequest: 325 }
+  { username: 'user004', totalTokens: 123456, requestCount: 389, avgTokensPerRequest: 317 }
 ]
 
 const TokenStats = () => {
-  const [loading, setLoading] = useState(false)
-  const [timeRange, setTimeRange] = useState<TimeRange>('week')
-  const [summary, setSummary] = useState<TokenStatsSummary>(mockSummary)
-  const [trendData, setTrendData] = useState<TokenTrendData[]>(mockTrendData)
-  const [serviceStats, setServiceStats] = useState<ServiceTokenStats[]>(mockServiceStats)
-  const [topConsumers, setTopConsumers] = useState<TopTokenConsumer[]>(mockTopConsumers)
+  const [timeRange] = useState<TimeRange>('week')
+  const [summary] = useState<TokenStatsSummary>(mockSummary)
+  const [trendData] = useState<TokenTrendData[]>(mockTrendData)
+  const [serviceStats] = useState<ServiceTokenStats[]>(mockServiceStats)
+  const [topConsumers] = useState<TopTokenConsumer[]>(mockTopConsumers)
 
-  useEffect(() => {
-    // 实际项目中从API获取数据
-    // loadData()
-  }, [timeRange])
-
-  // Token使用趋势图
-  const trendOption = {
-    title: { text: 'Token 使用量趋势', left: 'center' },
-    tooltip: { trigger: 'axis' },
-    legend: { data: ['总Token', '输入Token', '输出Token'], top: 30 },
-    grid: { left: '3%', right: '4%', bottom: '3%', top: '20%', containLabel: true },
-    xAxis: {
-      type: 'category',
-      data: trendData.map(d => d.date),
-      boundaryGap: false
-    },
-    yAxis: { type: 'value', name: 'Token数' },
-    series: [
-      {
-        name: '总Token',
-        type: 'line',
-        smooth: true,
-        data: trendData.map(d => d.totalTokens),
-        areaStyle: { opacity: 0.3 },
-        itemStyle: { color: '#1890ff' }
-      },
-      {
-        name: '输入Token',
-        type: 'line',
-        smooth: true,
-        data: trendData.map(d => d.inputTokens),
-        itemStyle: { color: '#52c41a' }
-      },
-      {
-        name: '输出Token',
-        type: 'line',
-        smooth: true,
-        data: trendData.map(d => d.outputTokens),
-        itemStyle: { color: '#faad14' }
-      }
-    ]
-  }
-
-  // 服务类型饼图
-  const servicePieOption = {
-    title: { text: '服务类型占比', left: 'center' },
-    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-    legend: { orient: 'vertical', left: 'left', top: 'center' },
-    series: [
-      {
-        type: 'pie',
-        radius: ['40%', '70%'],
-        avoidLabelOverlap: false,
-        label: { show: true, formatter: '{b}\n{d}%' },
-        data: serviceStats.map(s => ({
-          name: s.serviceType,
-          value: s.totalTokens
-        })),
-        itemStyle: {
-          color: (params: { dataIndex: number }) => {
-            const colors = ['#1890ff', '#52c41a', '#faad14', '#722ed1']
-            return colors[params.dataIndex % colors.length]
-          }
-        }
-      }
-    ]
-  }
-
-  // 服务类型柱状图
-  const serviceBarOption = {
-    title: { text: '各服务Token消耗', left: 'center' },
-    tooltip: { trigger: 'axis' },
-    grid: { left: '3%', right: '4%', bottom: '3%', top: '15%', containLabel: true },
-    xAxis: {
-      type: 'category',
-      data: serviceStats.map(s => s.serviceType)
-    },
-    yAxis: [
-      { type: 'value', name: 'Token数' },
-      { type: 'value', name: '费用($)' }
-    ],
-    series: [
-      {
-        name: 'Token数',
-        type: 'bar',
-        data: serviceStats.map(s => s.totalTokens),
-        itemStyle: { color: '#1890ff' }
-      },
-      {
-        name: '费用',
-        type: 'bar',
-        yAxisIndex: 1,
-        data: serviceStats.map(s => s.cost),
-        itemStyle: { color: '#52c41a' }
-      }
-    ]
-  }
-
-  // Top10消费者表格列
-  const topConsumerColumns = [
-    { title: '排名', dataIndex: 'rank', key: 'rank', width: 60, render: (_: unknown, __: unknown, index: number) => index + 1 },
-    { title: '用户名', dataIndex: 'username', key: 'username' },
-    { title: '总Token', dataIndex: 'totalTokens', key: 'totalTokens', render: (val: number) => val.toLocaleString() },
-    { title: '请求次数', dataIndex: 'requestCount', key: 'requestCount', render: (val: number) => val.toLocaleString() },
-    { title: '平均Token/请求', dataIndex: 'avgTokensPerRequest', key: 'avgTokensPerRequest', render: (val: number) => val.toFixed(0) }
-  ]
-
-  const serviceTableColumns = [
-    { title: '服务类型', dataIndex: 'serviceType', key: 'serviceType' },
-    { title: '总Token', dataIndex: 'totalTokens', key: 'totalTokens', render: (val: number) => val.toLocaleString() },
-    { title: '请求次数', dataIndex: 'requestCount', key: 'requestCount', render: (val: number) => val.toLocaleString() },
-    { title: '平均Token/请求', dataIndex: 'avgTokensPerRequest', key: 'avgTokensPerRequest', render: (val: number) => val.toFixed(0) },
-    { title: '费用($)', dataIndex: 'cost', key: 'cost', render: (val: number) => `$${val.toFixed(2)}` }
-  ]
+  // Simple bar chart component
+  const SimpleBarChart = ({ data, maxValue, color }: { data: number[]; maxValue: number; color: string }) => (
+    <div className="flex items-end gap-1 h-48">
+      {data.map((value, i) => (
+        <div
+          key={i}
+          className="flex-1 rounded-t transition-all hover:opacity-80"
+          style={{ height: `${(value / maxValue) * 100}%`, backgroundColor: color }}
+          title={value.toLocaleString()}
+        />
+      ))}
+    </div>
+  )
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <Title level={4}>Token 统计</Title>
-        <Space>
-          <Select
-            value={timeRange}
-            onChange={setTimeRange}
-            style={{ width: 120 }}
-            options={[
-              { label: '今日', value: 'today' },
-              { label: '本周', value: 'week' },
-              { label: '本月', value: 'month' },
-              { label: '自定义', value: 'custom' }
-            ]}
-          />
-          {timeRange === 'custom' && (
-            <RangePicker onChange={(dates) => console.log(dates)} />
-          )}
-        </Space>
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Token 统计</h1>
+        <select
+          value={timeRange}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                     bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        >
+          <option value="today">今日</option>
+          <option value="week">本周</option>
+          <option value="month">本月</option>
+          <option value="custom">自定义</option>
+        </select>
       </div>
 
-      {/* 关键指标卡片 */}
-      <Row gutter={16}>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="总Token数"
-              value={summary.totalTokens}
-              prefix={<ThunderboltOutlined />}
-              suffix="Tokens"
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="日均消耗"
-              value={summary.avgDailyTokens}
-              prefix={<LineChartOutlined />}
-              suffix="Tokens"
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="峰值消耗"
-              value={summary.peakDailyTokens}
-              prefix={<ArrowUpOutlined />}
-              suffix="Tokens"
-              valueStyle={{ color: '#faad14' }}
-              valueRender={(value) => (
-                <span style={{ color: '#faad14' }}>{Number(value).toLocaleString()}</span>
-              )}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="总费用"
-              value={summary.totalCost}
-              prefix={<PieChartOutlined />}
-              suffix="$"
-              precision={2}
-              valueStyle={{ color: '#722ed1' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      {/* Stats cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">总Token数</p>
+          <p className="text-2xl font-bold text-blue-500 mt-1">{summary.totalTokens.toLocaleString()}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">日均消耗</p>
+          <p className="text-2xl font-bold text-green-500 mt-1">{summary.avgDailyTokens.toLocaleString()}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">峰值消耗</p>
+          <p className="text-2xl font-bold text-yellow-500 mt-1">{summary.peakDailyTokens.toLocaleString()}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400">总费用</p>
+          <p className="text-2xl font-bold text-purple-500 mt-1">${summary.totalCost.toFixed(2)}</p>
+        </div>
+      </div>
 
-      {/* Token使用趋势图 */}
-      <Card>
-        <ReactECharts option={trendOption} style={{ height: 350 }} />
-      </Card>
-
-      {/* 服务类型分布 */}
-      <Row gutter={16}>
-        <Col span={12}>
-          <Card>
-            <ReactECharts option={servicePieOption} style={{ height: 300 }} />
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card title="服务类型统计">
-            <Table
-              columns={serviceTableColumns}
-              dataSource={serviceStats}
-              rowKey="serviceType"
-              pagination={false}
-              size="small"
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Token消耗Top10 */}
-      <Card title="Token 消耗 Top 10">
-        <Table
-          columns={topConsumerColumns}
-          dataSource={topConsumers.map((c, i) => ({ ...c, key: i }))}
-          pagination={false}
-          size="small"
+      {/* Trend chart */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Token 使用量趋势</h2>
+        <SimpleBarChart
+          data={trendData.map(d => d.totalTokens)}
+          maxValue={Math.max(...trendData.map(d => d.totalTokens))}
+          color="#3b82f6"
         />
-      </Card>
+        <div className="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+          {trendData.map(d => (
+            <span key={d.date}>{d.date.split('-')[2]}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Service stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-medium text-gray-800 dark:text-white mb-4">服务类型统计</h2>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                <th className="pb-2">服务类型</th>
+                <th className="pb-2">Token</th>
+                <th className="pb-2">请求次数</th>
+                <th className="pb-2">费用</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {serviceStats.map(stat => (
+                <tr key={stat.serviceType}>
+                  <td className="py-2 text-gray-800 dark:text-gray-200">{stat.serviceType}</td>
+                  <td className="py-2 text-gray-600 dark:text-gray-400">{stat.totalTokens.toLocaleString()}</td>
+                  <td className="py-2 text-gray-600 dark:text-gray-400">{stat.requestCount.toLocaleString()}</td>
+                  <td className="py-2 text-gray-600 dark:text-gray-400">${stat.cost.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-medium text-gray-800 dark:text-white mb-4">Token 消耗 Top 10</h2>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                <th className="pb-2 w-8">#</th>
+                <th className="pb-2">用户名</th>
+                <th className="pb-2">总Token</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {topConsumers.map((consumer, i) => (
+                <tr key={consumer.username}>
+                  <td className="py-2 text-gray-500">{i + 1}</td>
+                  <td className="py-2 text-gray-800 dark:text-gray-200">{consumer.username}</td>
+                  <td className="py-2 text-gray-600 dark:text-gray-400">{consumer.totalTokens.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }

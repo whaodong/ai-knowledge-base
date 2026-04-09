@@ -79,3 +79,38 @@ export const USER_STATUS_MAP: Record<string, { text: string; color: string }> = 
   'BANNED': { text: '已封禁', color: 'error' },
   'PENDING': { text: '待审核', color: 'processing' }
 }
+
+// 系统用户（用户管理模块）
+export interface SystemUser {
+  id: number
+  username: string
+  email?: string
+  role: UserRole
+  status: UserStatus
+  createdAt: string
+  updatedAt: string
+}
+
+// 更新用户角色请求
+export interface UpdateUserRoleRequest {
+  role: UserRole
+}
+
+// 更新用户状态请求
+export interface UpdateUserStatusRequest {
+  status: UserStatus
+}
+
+// 用户统计
+export interface UserStats {
+  totalUsers: number
+  activeUsers: number
+  inactiveUsers: number
+  bannedUsers: number
+  adminCount: number
+  userCount: number
+  viewerCount: number
+  todayNewUsers: number
+  weekNewUsers: number
+  monthNewUsers: number
+}

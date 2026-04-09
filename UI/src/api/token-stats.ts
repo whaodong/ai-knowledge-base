@@ -1,5 +1,5 @@
 import apiClient from './client'
-import type { Result, PageResponse } from '@/types/api'
+import type { Result } from '@/types/api'
 import type { TokenStatsParams, TokenStatsResponse, TokenStatsOverview } from '@/types/token-stats'
 
 export const tokenStatsApi = {

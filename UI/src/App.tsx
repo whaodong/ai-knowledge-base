@@ -1,6 +1,4 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ConfigProvider, theme } from 'antd'
-import zhCN from 'antd/locale/zh_CN'
 import { useEffect } from 'react'
 import { AppRouter } from '@/router'
 import { useSettingsStore } from '@/stores/settingsStore'
@@ -8,18 +6,16 @@ import { useSettingsStore } from '@/stores/settingsStore'
 const queryClient = new QueryClient()
 
 function App() {
-  const { theme: appTheme } = useSettingsStore()
+  const { theme } = useSettingsStore()
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', appTheme === 'dark')
-  }, [appTheme])
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
 
   return (
-    <ConfigProvider locale={zhCN} theme={{ algorithm: appTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
-      <QueryClientProvider client={queryClient}>
-        <AppRouter />
-      </QueryClientProvider>
-    </ConfigProvider>
+    <QueryClientProvider client={queryClient}>
+      <AppRouter />
+    </QueryClientProvider>
   )
 }
 

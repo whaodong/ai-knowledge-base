@@ -1,42 +1,5 @@
-import { useState, useEffect } from 'react'
-import {
-  Table,
-  Card,
-  Button,
-  Space,
-  Tag,
-  Progress,
-  Modal,
-  Select,
-  Input,
-  message,
-  Popconfirm,
-  Typography,
-  Row,
-  Col,
-  Statistic,
-  DatePicker
-} from 'antd'
-import {
-  ReloadOutlined,
-  PlayCircleOutlined,
-  StopOutlined,
-  DeleteOutlined,
-  RetryOutlined,
-  PlusOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined
-} from '@ant-design/icons'
-import type { ColumnsType } from 'antd/es/table'
-import { embeddingApi } from '@/api/embedding'
+import { useState } from 'react'
 import type { EmbeddingTask, EmbeddingTaskStatus, EmbeddingTaskStats, EmbeddingTaskQueryParams } from '@/types/embedding'
-import { EMBEDDING_TASK_STATUS_MAP } from '@/types/embedding'
-import dayjs from 'dayjs'
-
-const { Title, Text } = Typography
-const { RangePicker } = DatePicker
-const { Search } = Input
 
 // 模拟数据
 const mockTasks: EmbeddingTask[] = [
@@ -98,53 +61,8 @@ const mockTasks: EmbeddingTask[] = [
     outputTokens: 12000,
     startTime: '2024-01-07 09:00:00',
     createTime: '2024-01-07 08:55:00',
-    errorMessage: '向量维度不匹配，请检查嵌入模型配置',
+    errorMessage: '向量维度不匹配',
     retryCount: 3
-  },
-  {
-    id: '5',
-    documentId: 105,
-    documentName: '数据库设计.sql',
-    status: 'COMPLETED',
-    totalChunks: 25,
-    completedChunks: 25,
-    failedChunks: 0,
-    progress: 100,
-    inputTokens: 5800,
-    outputTokens: 4200,
-    startTime: '2024-01-07 08:00:00',
-    endTime: '2024-01-07 08:01:15',
-    createTime: '2024-01-07 07:58:00',
-    retryCount: 0
-  },
-  {
-    id: '6',
-    documentId: 106,
-    documentName: '测试报告.docx',
-    status: 'PENDING',
-    totalChunks: 45,
-    completedChunks: 0,
-    failedChunks: 0,
-    progress: 0,
-    inputTokens: 0,
-    outputTokens: 0,
-    createTime: '2024-01-07 12:15:00',
-    retryCount: 0
-  },
-  {
-    id: '7',
-    documentId: 107,
-    documentName: '会议纪要.txt',
-    status: 'PROCESSING',
-    totalChunks: 15,
-    completedChunks: 10,
-    failedChunks: 0,
-    progress: 67,
-    inputTokens: 3200,
-    outputTokens: 0,
-    startTime: '2024-01-07 12:10:00',
-    createTime: '2024-01-07 12:08:00',
-    retryCount: 0
   }
 ]
 
@@ -157,363 +75,213 @@ const mockStats: EmbeddingTaskStats = {
   avgProcessingTime: 45
 }
 
+const statusConfig: Record<string, { color: string; text: string }> = {
+  PENDING: { color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400', text: '待处理' },
+  PROCESSING: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', text: '处理中' },
+  COMPLETED: { color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', text: '已完成' },
+  FAILED: { color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', text: '失败' }
+}
+
 const EmbeddingTasks = () => {
-  const [loading, setLoading] = useState(false)
-  const [tasks, setTasks] = useState<EmbeddingTask[]>(mockTasks)
-  const [stats, setStats] = useState<EmbeddingTaskStats>(mockStats)
-  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([])
+  const [tasks] = useState<EmbeddingTask[]>(mockTasks)
+  const [stats] = useState<EmbeddingTaskStats>(mockStats)
+  const [selectedRowKeys] = useState<string[]>([])
   const [params, setParams] = useState<EmbeddingTaskQueryParams>({
     pageNum: 1,
     pageSize: 10
   })
-  const [total, setTotal] = useState(0)
-  const [batchModalVisible, setBatchModalVisible] = useState(false)
-  const [retryModalVisible, setRetryModalVisible] = useState(false)
 
-  useEffect(() => {
-    loadTasks()
-  }, [params])
-
-  // 加载任务列表
-  const loadTasks = async () => {
-    setLoading(true)
-    try {
-      // 实际项目中调用API
-      // const res = await embeddingApi.getEmbeddingTasks(params)
-      // if (res.code === 200 && res.data) {
-      //   setTasks(res.data.records)
-      //   setTotal(res.data.total)
-      // }
-      setLoading(false)
-    } catch (error) {
-      message.error('加载任务列表失败')
-      setLoading(false)
-    }
+  const handleRetry = (id: string) => {
+    alert(`重试任务 ${id}`)
   }
 
-  // 重试失败任务
-  const handleRetry = async (id: string) => {
-    try {
-      // await embeddingApi.retryTask(id)
-      message.success('任务已重新提交')
-      loadTasks()
-    } catch (error) {
-      message.error('重试失败')
-    }
+  const handleCancel = (id: string) => {
+    alert(`取消任务 ${id}`)
   }
 
-  // 批量重试失败任务
-  const handleBatchRetryFailed = async () => {
-    try {
-      // await embeddingApi.batchRetryFailedTasks()
-      message.success('已重新提交所有失败任务')
-      setRetryModalVisible(false)
-      loadTasks()
-    } catch (error) {
-      message.error('批量重试失败')
-    }
+  const handleDelete = (id: string) => {
+    alert(`删除任务 ${id}`)
   }
-
-  // 批量提交
-  const handleBatchSubmit = async () => {
-    if (selectedRowKeys.length === 0) {
-      message.warning('请选择要提交的任务')
-      return
-    }
-    try {
-      // await embeddingApi.batchSubmitTasks({ documentIds: selectedRowKeys.map(Number) })
-      message.success(`已提交 ${selectedRowKeys.length} 个任务`)
-      setBatchModalVisible(false)
-      setSelectedRowKeys([])
-      loadTasks()
-    } catch (error) {
-      message.error('批量提交失败')
-    }
-  }
-
-  // 取消任务
-  const handleCancel = async (id: string) => {
-    try {
-      // await embeddingApi.cancelTask(id)
-      message.success('任务已取消')
-      loadTasks()
-    } catch (error) {
-      message.error('取消失败')
-    }
-  }
-
-  // 删除任务
-  const handleDelete = async (id: string) => {
-    try {
-      // await embeddingApi.deleteTask(id)
-      message.success('删除成功')
-      loadTasks()
-    } catch (error) {
-      message.error('删除失败')
-    }
-  }
-
-  // 表格列定义
-  const columns: ColumnsType<EmbeddingTask> = [
-    {
-      title: 'ID',
-      dataIndex: 'id',
-      width: 80
-    },
-    {
-      title: '文档名称',
-      dataIndex: 'documentName',
-      ellipsis: true,
-      render: (text: string) => <Text ellipsis={{ tooltip: text }}>{text}</Text>
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      width: 100,
-      render: (status: EmbeddingTaskStatus) => {
-        const config = EMBEDDING_TASK_STATUS_MAP[status]
-        return <Tag color={config?.color}>{config?.text || status}</Tag>
-      }
-    },
-    {
-      title: '进度',
-      dataIndex: 'progress',
-      width: 180,
-      render: (progress: number, record: EmbeddingTask) => (
-        <div className="w-full pr-4">
-          <Progress
-            percent={progress}
-            size="small"
-            status={record.status === 'FAILED' ? 'exception' : undefined}
-            format={(p) => `${record.completedChunks}/${record.totalChunks}`}
-          />
-        </div>
-      )
-    },
-    {
-      title: 'Token',
-      width: 120,
-      render: (_: unknown, record: EmbeddingTask) => (
-        <span>
-          {record.inputTokens > 0 ? (
-            <>
-              <Text type="secondary">入:</Text> {(record.inputTokens / 1000).toFixed(1)}K
-              {record.outputTokens > 0 && (
-                <> | <Text type="secondary">出:</Text> {(record.outputTokens / 1000).toFixed(1)}K</>
-              )}
-            </>
-          ) : (
-            <Text type="secondary">-</Text>
-          )}
-        </span>
-      )
-    },
-    {
-      title: '重试次数',
-      dataIndex: 'retryCount',
-      width: 80,
-      render: (count: number) => (
-        <span style={{ color: count > 0 ? '#faad14' : 'inherit' }}>{count}</span>
-      )
-    },
-    {
-      title: '创建时间',
-      dataIndex: 'createTime',
-      width: 160,
-      render: (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm')
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 180,
-      fixed: 'right',
-      render: (_: unknown, record: EmbeddingTask) => (
-        <Space size="small">
-          {record.status === 'FAILED' && (
-            <Button
-              type="link"
-              size="small"
-              icon={<RetryOutlined />}
-              onClick={() => handleRetry(record.id)}
-            >
-              重试
-            </Button>
-          )}
-          {record.status === 'PENDING' && (
-            <Button
-              type="link"
-              size="small"
-              danger
-              icon={<StopOutlined />}
-              onClick={() => handleCancel(record.id)}
-            >
-              取消
-            </Button>
-          )}
-          {record.status !== 'PROCESSING' && (
-            <Popconfirm
-              title="确定删除该任务？"
-              onConfirm={() => handleDelete(record.id)}
-            >
-              <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-                删除
-              </Button>
-            </Popconfirm>
-          )}
-        </Space>
-      )
-    }
-  ]
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <Title level={4}>向量化任务</Title>
-        <Space>
-          <Button
-            icon={<RetryOutlined />}
-            onClick={() => setRetryModalVisible(true)}
-          >
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">向量化任务</h1>
+        <div className="flex gap-2">
+          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
             重试失败任务
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setBatchModalVisible(true)}
-            disabled={selectedRowKeys.length === 0}
-          >
+          </button>
+          <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
             批量提交 ({selectedRowKeys.length})
-          </Button>
-          <Button icon={<ReloadOutlined />} onClick={loadTasks}>
+          </button>
+          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600">
             刷新
-          </Button>
-        </Space>
+          </button>
+        </div>
       </div>
 
-      {/* 统计卡片 */}
-      <Row gutter={16}>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="总任务数"
-              value={stats.totalTasks}
-              prefix={<CheckCircleOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="待处理"
-              value={stats.pendingTasks}
-              prefix={<ClockCircleOutlined />}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="进行中"
-              value={stats.processingTasks}
-              prefix={<PlayCircleOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col span={6}>
-          <Card>
-            <Statistic
-              title="失败任务"
-              value={stats.failedTasks}
-              prefix={<ExclamationCircleOutlined />}
-              valueStyle={{ color: '#ff4d4f' }}
-            />
-          </Card>
-        </Col>
-      </Row>
+      {/* Stats cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">总任务数</p>
+              <p className="text-xl font-bold text-gray-800 dark:text-white">{stats.totalTasks}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+              <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">待处理</p>
+              <p className="text-xl font-bold text-gray-800 dark:text-white">{stats.pendingTasks}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">进行中</p>
+              <p className="text-xl font-bold text-gray-800 dark:text-white">{stats.processingTasks}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+              <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">失败任务</p>
+              <p className="text-xl font-bold text-red-500">{stats.failedTasks}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* 筛选条件 */}
-      <Card>
-        <Space wrap>
-          <Select
-            placeholder="状态筛选"
-            allowClear
-            style={{ width: 120 }}
-            onChange={(value) => setParams({ ...params, status: value })}
-            options={Object.entries(EMBEDDING_TASK_STATUS_MAP).map(([value, config]) => ({
-              label: config.text,
-              value
-            }))}
-          />
-          <Search
+      {/* Filter */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+        <div className="flex flex-wrap gap-3">
+          <select
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                       bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            onChange={(e) => setParams({ ...params, status: e.target.value as EmbeddingTaskStatus })}
+          >
+            <option value="">全部状态</option>
+            {Object.entries(statusConfig).map(([value, config]) => (
+              <option key={value} value={value}>{config.text}</option>
+            ))}
+          </select>
+          <input
+            type="text"
             placeholder="搜索文档名称"
-            style={{ width: 200 }}
-            onSearch={(value) => setParams({ ...params, documentName: value })}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                       bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
-          <RangePicker
-            onChange={(dates) => {
-              if (dates) {
-                setParams({
-                  ...params,
-                  startDate: dates[0]?.format('YYYY-MM-DD'),
-                  endDate: dates[1]?.format('YYYY-MM-DD')
-                })
-              }
-            }}
-          />
-        </Space>
-      </Card>
+        </div>
+      </div>
 
-      {/* 任务列表 */}
-      <Card>
-        <Table
-          columns={columns}
-          dataSource={tasks}
-          rowKey="id"
-          loading={loading}
-          scroll={{ x: 1200 }}
-          rowSelection={{
-            selectedRowKeys,
-            onChange: (keys) => setSelectedRowKeys(keys as string[])
-          }}
-          pagination={{
-            current: params.pageNum,
-            pageSize: params.pageSize,
-            total,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 条`,
-            onChange: (page, pageSize) => setParams({ ...params, pageNum: page, pageSize })
-          }}
-        />
-      </Card>
-
-      {/* 批量提交弹窗 */}
-      <Modal
-        title="批量提交任务"
-        open={batchModalVisible}
-        onOk={handleBatchSubmit}
-        onCancel={() => {
-          setBatchModalVisible(false)
-          setSelectedRowKeys([])
-        }}
-      >
-        <p>确定要提交选中的 {selectedRowKeys.length} 个任务吗？</p>
-        <p className="text-gray-500">提示：已在队列中的任务将重新排队</p>
-      </Modal>
-
-      {/* 重试失败任务弹窗 */}
-      <Modal
-        title="重试失败任务"
-        open={retryModalVisible}
-        onOk={handleBatchRetryFailed}
-        onCancel={() => setRetryModalVisible(false)}
-      >
-        <p>确定要重新提交所有失败的任务吗？</p>
-        <p className="text-gray-500">当前有 {stats.failedTasks} 个失败任务</p>
-      </Modal>
+      {/* Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-700/50">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">ID</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">文档名称</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400 w-24">状态</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400 w-48">进度</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400 w-24">重试</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400 w-36">创建时间</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400 w-36">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {tasks.map((task) => (
+                <tr key={task.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{task.id}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 truncate max-w-xs">{task.documentName}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <span className={`px-2 py-1 rounded text-xs ${statusConfig[task.status]?.color}`}>
+                      {statusConfig[task.status]?.text || task.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${task.status === 'FAILED' ? 'bg-red-500' : 'bg-blue-500'}`}
+                          style={{ width: `${task.progress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-500">{task.completedChunks}/{task.totalChunks}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    {task.retryCount > 0 ? (
+                      <span className="text-yellow-500">{task.retryCount}</span>
+                    ) : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                    {task.createTime?.split(' ')[0]}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      {task.status === 'FAILED' && (
+                        <button
+                          onClick={() => handleRetry(task.id)}
+                          className="text-blue-500 hover:text-blue-600"
+                        >
+                          重试
+                        </button>
+                      )}
+                      {task.status === 'PENDING' && (
+                        <button
+                          onClick={() => handleCancel(task.id)}
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          取消
+                        </button>
+                      )}
+                      {task.status !== 'PROCESSING' && (
+                        <button
+                          onClick={() => handleDelete(task.id)}
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          删除
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   )
 }

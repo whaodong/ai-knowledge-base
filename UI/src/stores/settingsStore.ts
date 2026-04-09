@@ -12,6 +12,7 @@ interface SettingsState {
     embeddingModel: string
   }
   setTheme: (theme: 'light' | 'dark') => void
+  toggleTheme: () => void
   setLanguage: (language: 'zh-CN' | 'en-US') => void
   setRagConfig: (config: Partial<SettingsState['ragConfig']>) => void
 }
@@ -29,6 +30,9 @@ export const useSettingsStore = create<SettingsState>()(
         embeddingModel: 'text-embedding-v3'
       },
       setTheme: (theme) => set({ theme }),
+      toggleTheme: () => set((state) => ({ 
+        theme: state.theme === 'dark' ? 'light' : 'dark' 
+      })),
       setLanguage: (language) => set({ language }),
       setRagConfig: (config) => set((state) => ({
         ragConfig: { ...state.ragConfig, ...config }

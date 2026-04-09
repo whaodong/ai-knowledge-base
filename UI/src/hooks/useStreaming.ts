@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef } from 'react'
-import { message } from 'antd'
 import { ragApi } from '@/api/rag'
 import { useChatStore } from '@/stores/chatStore'
 
@@ -52,7 +51,6 @@ export const useStreaming = (sessionId: string) => {
     eventSource.onerror = () => {
       eventSource.close()
       setIsStreaming(false)
-      message.error('连接失败')
     }
   }, [sessionId, isStreaming, addMessage, upsertMessage])
 

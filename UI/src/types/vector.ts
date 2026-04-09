@@ -66,3 +66,36 @@ export interface DeleteCollectionRequest {
   collectionName: string
   confirmName: string
 }
+
+// 向量集合（用户管理模块）
+export interface VectorCollection {
+  name: string
+  dimension: number
+  indexType: IndexType
+  metricType: MetricType
+  vectorCount: number
+  totalChunks: number
+  usingField: string
+  status: 'READY' | 'BUILDING' | 'FAILED'
+  createTime: string
+  description?: string
+}
+
+// 集合查询参数
+export interface CollectionQueryParams {
+  pageNum: number
+  pageSize: number
+  name?: string
+  status?: string
+  sortBy?: string
+  sortOrder?: 'ASC' | 'DESC'
+}
+
+// 重建索引请求
+export interface RebuildIndexRequest {
+  collectionName: string
+  fieldName?: string
+  indexType?: IndexType
+  metricType?: MetricType
+  params?: Record<string, string | number>
+}

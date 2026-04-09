@@ -61,3 +61,34 @@ export interface TokenQueryParams {
   serviceType?: string
   username?: string
 }
+
+// Token计数响应
+export interface TokenCountResponse {
+  text: string
+  model: string
+  tokenCount: number
+  charCount: number
+}
+
+// 会话Token统计
+export interface SessionTokenStats {
+  sessionId: string
+  username: string
+  totalTokens: number
+  inputTokens: number
+  outputTokens: number
+  requestCount: number
+  avgTokensPerRequest: number
+  firstRequestTime?: string
+  lastRequestTime?: string
+}
+
+// Token趋势
+export interface TokenTrend {
+  date: string
+  totalTokens: number
+  inputTokens: number
+  outputTokens: number
+  requestCount: number
+  avgTokensPerRequest: number
+}

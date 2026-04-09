@@ -83,16 +83,16 @@ export type { Document } from './document'
 export type { DocumentQueryParams, DocumentUploadRequest, DocumentBatchUploadResponse, DocumentChunk } from './document'
 export { FILE_TYPE_MAP, DOCUMENT_STATUS_MAP } from './document'
 
-export type { TokenUsage, TokenStatsSummary, TokenTrendData, ServiceTokenStats, TopTokenConsumer, TimeRange, TokenQueryParams } from './token'
+export type { TokenUsage, TokenStatsSummary, TokenTrendData, ServiceTokenStats, TopTokenConsumer, TimeRange, TokenQueryParams, TokenCountResponse, SessionTokenStats, TokenTrend } from './token'
 
 export type { EmbeddingTask, EmbeddingTaskStatus, EmbeddingTaskQueryParams, EmbeddingTaskStats, BatchEmbeddingRequest } from './embedding'
 export { EMBEDDING_TASK_STATUS_MAP } from './embedding'
 
-export type { Collection, CollectionDetail, CollectionStats, IndexType, MetricType, SegmentInfo, FieldSchema, BuildIndexRequest, DeleteCollectionRequest } from './vector'
+export type { Collection, CollectionDetail, CollectionStats, IndexType, MetricType, SegmentInfo, FieldSchema, BuildIndexRequest, DeleteCollectionRequest, VectorCollection, CollectionQueryParams, RebuildIndexRequest } from './vector'
 
 export type { CacheEntry, CacheStats, CacheType, CacheQueryParams, CacheWarmupRequest, ClearCacheRequest, CacheConfig } from './cache'
 
-export type { User as UserInfo, UserStatus, UserRole, UserQueryParams, CreateUserRequest, UpdateUserRequest, ChangePasswordRequest, BatchUserOperationRequest } from './user'
+export type { User as UserInfo, UserStatus, UserRole, UserQueryParams, CreateUserRequest, UpdateUserRequest, ChangePasswordRequest, BatchUserOperationRequest, SystemUser, UpdateUserRoleRequest, UpdateUserStatusRequest, UserStats } from './user'
 export { USER_ROLE_MAP, USER_STATUS_MAP } from './user'
 
 // 新增模块导出（兼容新目录结构）
